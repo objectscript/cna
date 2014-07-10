@@ -2,6 +2,12 @@
 #ifndef CNA_H
 #define CNA_H
 
-int call_function_from_dynamic_library(const char *libname, const char *funcname, int nargs, int *args, int *retval);
+#include <cdzf.h>
+
+int
+load_library(const char *libname, ZARRAYP retval);
+
+int
+free_library(ZARRAYP libID);
 
 #endif /* CNA_H */
