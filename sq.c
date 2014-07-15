@@ -3,22 +3,32 @@
 
 typedef unsigned int uint; 
 
-double square(double a)
+#ifdef _WIN32
+  #define EXPORT __declspec(dllexport)
+#else /* UNIX */
+  #define EXPORT
+#endif /* _WIN32 */
+
+EXPORT double 
+square(double a)
 {
-	return a * a;
+  return a * a;
 }
 
-uint sum(uint a, uint b, uint c, uint d, uint e)
+EXPORT uint
+sum(uint a, uint b, uint c, uint d, uint e)
 {
-	return a + b + c + d + e;
+  return a + b + c + d + e;
 }
 
-double mul(unsigned long long a, double b)
+EXPORT double
+mul(unsigned long long a, double b)
 {
-	return a * b;
+  return a * b;
 }
 
-int64_t x(int64_t x)
+EXPORT int64_t
+x(int64_t x)
 {
-	return x;
+  return x;
 }
