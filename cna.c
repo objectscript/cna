@@ -12,8 +12,8 @@
   #include <windows.h>
   
   #define DEFAULT_LOAD_OPTS LOAD_WITH_ALTERED_SEARCH_PATH
-  #define LOAD_LIBRARY(NAME,OPTS) (NAME ? LoadLibraryExW(NAME, NULL, OPTS) : GetModuleHandleW(NULL))
-  #define FREE_LIBRARY(HANDLE) (((HANDLE)==GetModuleHandleW(NULL) || FreeLibrary(HANDLE))?0:-1)
+  #define LOAD_LIBRARY(NAME,OPTS) (NAME ? LoadLibraryEx(NAME, NULL, OPTS) : GetModuleHandle(NULL))
+  #define FREE_LIBRARY(HANDLE) (((HANDLE)==GetModuleHandle(NULL) || FreeLibrary(HANDLE))?0:-1)
   #define FIND_ENTRY(HANDLE, NAME) GetProcAddress(HANDLE, NAME)
 #else /* UNIX */
   #include <dlfcn.h>
@@ -74,15 +74,15 @@ free_library(ZARRAYP libID)
 }
 
 enum TYPE {
-  VOID = 0,
-  UCHAR = 1,
-  UINT = 2,
-  USHORT = 3,
-  ULONG = 4,
-  INT64 = 5,
-  FLOAT = 6,
-  DOUBLE = 7,
-  LONGDOUBLE = 8
+  CNA_VOID = 0,
+  CNA_UCHAR = 1,
+  CNA_UINT = 2,
+  CNA_USHORT = 3,
+  CNA_ULONG = 4,
+  CNA_INT64 = 5,
+  CNA_FLOAT = 6,
+  CNA_DOUBLE = 7,
+  CNA_LONGDOUBLE = 8
 };
 
 int
@@ -101,39 +101,39 @@ call_function(ZARRAYP libID, const char *funcname, ZARRAYP argtypes, ZARRAYP arg
   
   for (i = 0; i < nargs + 1; ++i) {
     switch (argtypes->data[i]) {
-      case UCHAR:
+      case CNA_UCHAR:
         size = sizeof(unsigned char);
         ffi_types[i] = &ffi_type_uchar;
         break;
-      case UINT:
+      case CNA_UINT:
         size = sizeof(unsigned int);
         ffi_types[i] = &ffi_type_uint;
         break;
-      case USHORT:
+      case CNA_USHORT:
         size = sizeof(unsigned short);
         ffi_types[i] = &ffi_type_ushort;
         break;
-      case ULONG:
+      case CNA_ULONG:
         size = sizeof(unsigned long);
         ffi_types[i] = &ffi_type_ulong;
         break;
-      case INT64:
+      case CNA_INT64:
         size = sizeof(int64_t);
         ffi_types[i] = &ffi_type_sint64;
         break;
-      case FLOAT:
+      case CNA_FLOAT:
         size = sizeof(float);
         ffi_types[i] = &ffi_type_float;
         break;
-      case DOUBLE:
+      case CNA_DOUBLE:
         size = sizeof(double);
         ffi_types[i] = &ffi_type_double;
         break;
-      case LONGDOUBLE:
+      case CNA_LONGDOUBLE:
         size = sizeof(long double);
         ffi_types[i] = &ffi_type_longdouble;
         break;
-      case VOID: 
+      case CNA_VOID: 
         if (i == nargs) {
           size = 0;
           ffi_types[i] = &ffi_type_void;
@@ -165,10 +165,10 @@ call_function(ZARRAYP libID, const char *funcname, ZARRAYP argtypes, ZARRAYP arg
     return ZF_FAILURE;
   }
 
-  void *funcpointer = dlsym(handle, funcname);
+  void *funcpointer = FIND_ENTRY(handle, funcname);
 
   if (!funcpointer) {
-    fprintf(stderr, "dlsym() failed\n");
+    fprintf(stderr, "FIND_ENTRY() failed\n");
     return ZF_FAILURE;
   }
 

@@ -1,25 +1,47 @@
-ifndef GLOBALS_HOME
-GLOBALS_HOME = /opt/cache
-endif # GLOBALS_HOME
+CC = gcc
+RM = rm
 
-CFLAGS = -Wall -Wextra -m64 -fpic -I${GLOBALS_HOME}/dev/cpp/include -I/usr/local/lib/libffi-3.1/include/
+CFLAGS = -Wall -Wextra -m64 -fpic
 
-all: libcna.so libsq.so
+SYS := $(shell gcc -dumpmachine)
+ifneq (, $(findstring linux, $(SYS)))
+	
+	SUFFIX = so
+	LDFLAGS = -shared
+	LIBS = -ldl -lffi
+	CFLAGS += -I/usr/local/lib/libffi-3.1/include/
+	ifndef GLOBALS_HOME
+		GLOBALS_HOME = /opt/cache
+	endif
+
+else ifneq (, $(findstring mingw, $(SYS)))
+	
+	SUFFIX = dll
+	LDFLAGS = -mdll
+	LIBS = -L./libs -lffi
+	CFLAGS += -I./libs/include
+	ifndef GLOBALS_HOME
+		GLOBALS_HOME = C:/InterSystems/Cache
+	endif
+
+else 
+	$(error Unsupported build platform)
+endif
+
+CFLAGS += -I${GLOBALS_HOME}/dev/cpp/include
+
+
+all: libcna.$(SUFFIX) libsq.$(SUFFIX)
 
 cna.o: cna.c cna.h
 
-libcna.so: cna.o
-	$(CC) -shared -o $@ $< -ldl -lffi
+libcna.$(SUFFIX): cna.o
+	$(CC) $(LDFLAGS) -o $@ $< $(LIBS)
 
 sq.o: sq.c
 
-libsq.so: sq.o
-	$(CC) -shared -o $@ $<
-
-test.o: test.c all 
-
-test: test.o
-	$(CC) -o $@ $< -L. -lcna
+libsq.$(SUFFIX): sq.o
+	$(CC) $(LDFLAGS) -o $@ $<
 
 clean:
-	$(RM) *.so *.o test
+	$(RM) *.$(SUFFIX) *.o

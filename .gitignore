@@ -6,8 +6,8 @@
 
 # Libraries
 *.lib
-*.a
 *.la
+*.a
 *.lo
 
 # Shared objects (inc. Windows DLLs)
@@ -24,3 +24,5 @@
 *.x86_64
 *.hex
 test
+
+log.txt
