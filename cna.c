@@ -82,7 +82,8 @@ enum TYPE {
   CNA_INT64 = 5,
   CNA_FLOAT = 6,
   CNA_DOUBLE = 7,
-  CNA_LONGDOUBLE = 8
+  CNA_LONGDOUBLE = 8,
+  CNA_POINTER = 9
 };
 
 int
@@ -132,6 +133,10 @@ call_function(ZARRAYP libID, const char *funcname, ZARRAYP argtypes, ZARRAYP arg
       case CNA_LONGDOUBLE:
         size = sizeof(long double);
         ffi_types[i] = &ffi_type_longdouble;
+        break;
+      case CNA_POINTER:
+        size = sizeof(void *);
+        ffi_types[i] = &ffi_type_pointer;
         break;
       case CNA_VOID: 
         if (i == nargs) {

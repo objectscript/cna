@@ -8,8 +8,14 @@
 <Method name="TestCNA">
 <Implementation><![CDATA[
 	try {
-		set CNAPath = "C:\Users\dd\Dropbox\is\CNA\libcna.dll"
-		set testLib = "C:\Users\dd\Dropbox\is\CNA\libsq.dll"
+
+		if ($SYSTEM.Version.GetOS() = "UNIX") {
+			set CNAPath = "/home/dd/Dropbox/is/CNA/libcna.so"
+			set testLib = "/home/dd/Dropbox/is/CNA/libsq.so"
+		} else {
+			set CNAPath = "C:\Users\dd\Dropbox\is\CNA\libcna.dll"
+			set testLib = "C:\Users\dd\Dropbox\is\CNA\libsq.dll"			
+		}
 
 		do $$$AssertEquals(##class(%File).Exists(CNAPath), 1, "CNA file exists")
 		do $$$AssertEquals(##class(%File).Exists(testLib), 1, "SQlib file exists")
