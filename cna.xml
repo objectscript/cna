@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2014.1.1 (Build 702U)" ts="2014-07-16 17:42:17">
+<Class name="CNA.CNA">
+<Super>%RegisteredObject</Super>
+<TimeChanged>63384,63522.185135</TimeChanged>
+<TimeCreated>63383,58144.669569</TimeCreated>
+
+<Property name="LibId">
+<Type>%String</Type>
+</Property>
+
+<Property name="CNAId">
+<Type>%Integer</Type>
+</Property>
+
+<Property name="TypeSizes">
+<Type>%String</Type>
+</Property>
+
+<Parameter name="VOID">
+<Default>0</Default>
+</Parameter>
+
+<Parameter name="UCHAR">
+<Default>1</Default>
+</Parameter>
+
+<Parameter name="UINT">
+<Default>2</Default>
+</Parameter>
+
+<Parameter name="USHORT">
+<Default>3</Default>
+</Parameter>
+
+<Parameter name="ULONG">
+<Default>4</Default>
+</Parameter>
+
+<Parameter name="INT64">
+<Default>5</Default>
+</Parameter>
+
+<Parameter name="FLOAT">
+<Default>6</Default>
+</Parameter>
+
+<Parameter name="DOUBLE">
+<Default>7</Default>
+</Parameter>
+
+<Parameter name="LONGDOUBLE">
+<Default>8</Default>
+</Parameter>
+
+<Parameter name="POINTER">
+<Default>9</Default>
+</Parameter>
+
+<Parameter name="NTYPES">
+<Default>10</Default>
+</Parameter>
+
+<Method name="ThrowMessage">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>msg:%String</FormalSpec>
+<Private>1</Private>
+<Implementation><![CDATA[
+	set st = $$$ERROR($$$GeneralError, msg)
+	throw ##class(%Exception.StatusException).CreateFromStatus(st)
+]]></Implementation>
+</Method>
+
+<Method name="CallFunction">
+<FormalSpec>name:%String,returnType:%Integer,*returnValue:%String,argTypes:%ListOfDataTypes,args...:%List</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	try {
+		set callFunc = $zf(-4, 3, ..CNAId, "call_function")
+		if (argTypes.Size '= args) {
+			do ..ThrowMessage("Size of collection of argument types and number of arguments must be equal.")
+		}
+		set cnaArgTypes = ""
+		set cnaArgs = ""
+		
+		for i = 1:1:args {
+			set val = $GET(args(i))
+			set type = argTypes.GetAt(i)
+			
+			if (type >= ..#NTYPES) {
+				do ..ThrowMessage("Incorrect type")	
+			}
+			set size = $ASCII(..TypeSizes, type + 1)
+			
+			if (type = ..#FLOAT || type = ..#LONGDOUBLE) {
+				throw ..ThrowMessage("Unsupported type")	
+			}elseif (type = ..#DOUBLE) {
+				set cnaVal = $ZDCHAR(val)
+			}elseif (size = 1) {
+				set cnaVal = $CHAR(val)
+			}elseif (size = 2) {
+				set cnaVal = $ZWCHAR(val)	
+			}elseif (size = 4) {
+				set cnaVal = $ZLCHAR(val)
+			}elseif (size = 8) {
+				set cnaVal = $ZQCHAR(val)
+			}else {
+				do ..ThrowMessage("Type with unsupported size")
+			}
+			
+			if (cnaVal = "") {
+				do ..ThrowMessage("Illegal value")
+			}
+			set cnaArgs = cnaArgs _ cnaVal
+			set cnaArgTypes = cnaArgTypes _ $CHAR(type)
+		}
+		
+		set cnaArgTypes = cnaArgTypes _ $CHAR(returnType)
+		set cnaRet = $zf(-5, ..CNAId, callFunc, ..LibId, name, cnaArgTypes, cnaArgs)
+				
+		set size = $ASCII(..TypeSizes, returnType + 1)
+		if (returnType = ..#FLOAT || returnType = ..#LONGDOUBLE) {
+			do ..ThrowMessage("Unsupported type of return value")	
+		}elseif (returnType = ..#DOUBLE) {
+			set returnValue = $ZDASCII(cnaRet)
+		}elseif (size = 1) {
+			set returnValue = $ASCII(cnaRet)
+		}elseif (size = 2) {
+			set returnValue = $ZWASCII(cnaRet)	
+		}elseif (size = 4) {
+			set returnValue = $ZLASCII(cnaRet)
+		}elseif (size = 8) {
+			set returnValue = $ZQASCII(cnaRet)
+		}else {
+			do ..ThrowMessage("Return value has unsupported size")
+		}
+	
+	} catch ex {
+		do ex.Log()
+		return ex.AsStatus()
+	}
+	Quit $$$OK
+]]></Implementation>
+</Method>
+
+<Method name="LoadLibrary">
+<FormalSpec>path:%String</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	try {
+		set loadLib = $zf(-4, 3, ..CNAId, "load_library")
+		set ..LibId = $zf(-5, ..CNAId, loadLib, path)
+	}catch ex {
+		do ex.Log()
+		return ex.AsStatus()
+	}
+	Quit $$$OK
+]]></Implementation>
+</Method>
+
+<Method name="FreeLibrary">
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	try {
+		set freeLib = $zf(-4, 3, ..CNAId, "free_library")
+		do $zf(-5, ..CNAId, freeLib, ..LibId)
+	} catch ex {
+		do ex.Log()
+		return ex.AsStatus()
+	}
+	
+	Quit $$$OK
+]]></Implementation>
+</Method>
+
+<Method name="%OnNew">
+<FormalSpec>CNAPath:%String=""</FormalSpec>
+<Private>1</Private>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	if ($SYSTEM.Version.GetOS() = "UNIX") {
+		set CNAPath = "/home/dd/Dropbox/is/CNA/libcna.so"
+	} else {
+		set CNAPath = "C:\Users\dd\Dropbox\is\CNA\libcna.dll"			
+	}
+	
+	try {
+		set ..CNAId = $zf(-4, 1, CNAPath)
+		set getSizes = $zf(-4, 3, ..CNAId, "get_sizes")
+		set ..TypeSizes = $zf(-5, ..CNAId, getSizes)
+	} catch ex {
+		do ex.Log()
+		return ex.AsStatus()
+	}
+	
+	Quit $$$OK
+]]></Implementation>
+</Method>
+
+<Method name="%OnClose">
+<Private>1</Private>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	try {
+		do $zf(-4, 2, ..CNAId)
+	} catch ex {
+		do ex.Log()
+		return ex.AsStatus()
+	}
+	Quit $$$OK
+]]></Implementation>
+</Method>
+</Class>
+</Export>

@@ -1,18 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2014.1.1 (Build 702U)" ts="2014-07-15 15:07:06">
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2014.1.1 (Build 702U)" ts="2014-07-16 12:36:11">
 <Class name="CNA.Tests">
 <Super>%UnitTest.TestCase</Super>
-<TimeChanged>63383,54409.009153</TimeChanged>
-<TimeCreated>63383,54409.009153</TimeCreated>
+<TimeChanged>63384,45360.361323</TimeChanged>
+<TimeCreated>63384,43091.390095</TimeCreated>
 
-<Method name="TestCNA">
+<Method name="TestLowLevel">
 <Implementation><![CDATA[
 	try {
-
 		if ($SYSTEM.Version.GetOS() = "UNIX") {
+			w "unix", !
 			set CNAPath = "/home/dd/Dropbox/is/CNA/libcna.so"
 			set testLib = "/home/dd/Dropbox/is/CNA/libsq.so"
 		} else {
+			w "win", !
 			set CNAPath = "C:\Users\dd\Dropbox\is\CNA\libcna.dll"
 			set testLib = "C:\Users\dd\Dropbox\is\CNA\libsq.dll"			
 		}
@@ -29,7 +30,7 @@
 		set args = $ZLCHAR(12, 10, 35, 321, 21)
 		set retVal = $zf(-3, "", "call_function", libID, func, argTypes, args)
 		set retVal = $ZLASCII(retVal)
-		do $$$AssertEquals(retVal, 399, "Check sum() from libsq:12 + 10 + 35 + 321 + 21 = 399")
+		do $$$AssertEquals(retVal, 399, "Check sum() from libsq: 12 + 10 + 35 + 321 + 21 = 399")
 
 		set func = "mul"
 		set argTypes = $CHAR(5, 7, 7)
@@ -43,7 +44,7 @@
 		set args = $ZQCHAR(-2384929929829)
 		set retVal = $zf(-3, "", "call_function", libID, func, argTypes, args)
 		set retVal =  $ZQASCII(retVal)
-		do $$$AssertEquals(retVal, -2384929929829, "Check x() from libsq:")
+		do $$$AssertEquals(retVal, -2384929929829, "Check x() from libsq:" _ retVal _ " = -2384929929829")
 		
 		set func = "square"
 		set argTypes = $CHAR(7, 7)
@@ -59,6 +60,55 @@
 			write $system.Status.GetErrorText(ex.AsStatus(),"ru"),!
 			do $zf(-3, "")
 	}
+]]></Implementation>
+</Method>
+
+<Method name="TestAPI">
+<Implementation><![CDATA[
+	if ($SYSTEM.Version.GetOS() = "UNIX") {
+		set testLib = "/home/dd/Dropbox/is/CNA/libsq.so"
+	} else {
+		set testLib = "C:\Users\dd\Dropbox\is\CNA\libsq.dll"			
+	}
+	
+	set cna = ##class(CNA.CNA).%New()
+	set st = cna.LoadLibrary(testLib)
+	do $$$AssertStatusOK(st, "Load test library")
+	
+	set argTypes = ##class(%ListOfDataTypes).%New()
+	do argTypes.Insert(cna.#INT64)
+	do argTypes.Insert(cna.#DOUBLE)
+	set st = cna.CallFunction("mul", cna.#DOUBLE, .retVal, argTypes, 10, $double(1.5))
+	do $$$AssertStatusOK(st, "Call mul() from test library")
+	do $$$AssertEquals(retVal, $double(15), "Check return value of mul()")
+	
+	do argTypes.Clear()
+	do argTypes.Insert(cna.#DOUBLE)
+	set st = cna.CallFunction("square", cna.#DOUBLE, .retVal, argTypes, $double(12341.12311))
+	do $$$AssertStatusOK(st, "Call square() from test library")
+	do $$$AssertEquals(retVal, $double(12341.12311) * $double(12341.12311), "Check return value of square()")
+
+	do argTypes.Clear()
+	do argTypes.Insert(cna.#UINT)
+	do argTypes.Insert(cna.#UINT)
+	do argTypes.Insert(cna.#UINT)
+	do argTypes.Insert(cna.#UINT)
+	do argTypes.Insert(cna.#UINT)
+	set st = cna.CallFunction("sum", cna.#UINT, .retVal, argTypes, 1243, 1231, 121, 12123, 121)
+	do $$$AssertStatusOK(st, "Call sum() from test library")
+	do $$$AssertEquals(retVal, 1243 + 1231 + 121 + 12123 + 121, "Check return value of sum()")
+
+	set st = cna.CallFunction("sum", cna.#UINT, .retVal, argTypes, 1243, -1231, 121, 12123, 121)
+	do $$$AssertStatusNotOK(st, "Invalid argument value: -1231 for UINT")
+
+	set st = cna.CallFunction("sum", cna.#UINT, .retVal, argTypes, 12431231231231231231312312, 113, 121, 12123, 121)
+	do $$$AssertStatusNotOK(st, "Invalid argument value: 12431231231231231231312312 for UINT")
+
+	
+	set st = cna.FreeLibrary()
+	do $$$AssertStatusOK(st, "Free test library")
+	set st = cna.LoadLibrary("selfla")
+	do $$$AssertStatusNotOK(st, "Fail to load library with wrong path")
 ]]></Implementation>
 </Method>
 </Class>
