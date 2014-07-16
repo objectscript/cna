@@ -71,6 +71,8 @@
 		set testLib = "C:\Users\dd\Dropbox\is\CNA\libsq.dll"			
 	}
 	
+	do $$$AssertEquals(##class(%File).Exists(testLib), 1, "SQlib file exists")
+
 	set cna = ##class(CNA.CNA).%New()
 	set st = cna.LoadLibrary(testLib)
 	do $$$AssertStatusOK(st, "Load test library")
