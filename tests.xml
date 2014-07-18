@@ -1,19 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2014.1.1 (Build 702U)" ts="2014-07-16 12:36:11">
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2014.1.1 (Build 702U)" ts="2014-07-18 18:28:52">
 <Class name="CNA.Tests">
 <Super>%UnitTest.TestCase</Super>
-<TimeChanged>63384,45360.361323</TimeChanged>
+<TimeChanged>63386,66318.610292</TimeChanged>
 <TimeCreated>63384,43091.390095</TimeCreated>
 
 <Method name="TestLowLevel">
 <Implementation><![CDATA[
 	try {
 		if ($SYSTEM.Version.GetOS() = "UNIX") {
-			w "unix", !
 			set CNAPath = "/home/dd/Dropbox/is/CNA/libcna.so"
 			set testLib = "/home/dd/Dropbox/is/CNA/libsq.so"
 		} else {
-			w "win", !
 			set CNAPath = "C:\Users\dd\Dropbox\is\CNA\libcna.dll"
 			set testLib = "C:\Users\dd\Dropbox\is\CNA\libsq.dll"			
 		}
@@ -66,14 +64,17 @@
 <Method name="TestAPI">
 <Implementation><![CDATA[
 	if ($SYSTEM.Version.GetOS() = "UNIX") {
+		set CNAPath = "/home/dd/Dropbox/is/CNA/libcna.so"
 		set testLib = "/home/dd/Dropbox/is/CNA/libsq.so"
 	} else {
+		set CNAPath = "C:\Users\dd\Dropbox\is\CNA\libcna.dll"
 		set testLib = "C:\Users\dd\Dropbox\is\CNA\libsq.dll"			
 	}
+
 	
 	do $$$AssertEquals(##class(%File).Exists(testLib), 1, "SQlib file exists")
 
-	set cna = ##class(CNA.CNA).%New()
+	set cna = ##class(CNA.CNA).%New(CNAPath)
 	set st = cna.LoadLibrary(testLib)
 	do $$$AssertStatusOK(st, "Load test library")
 	
@@ -111,6 +112,49 @@
 	do $$$AssertStatusOK(st, "Free test library")
 	set st = cna.LoadLibrary("selfla")
 	do $$$AssertStatusNotOK(st, "Fail to load library with wrong path")
+]]></Implementation>
+</Method>
+
+<Method name="TestHunspell">
+<Implementation><![CDATA[
+	if ($SYSTEM.Version.GetOS() = "UNIX") {
+		//Not implemented yet
+		return $$$OK
+	} else {
+		set CNAPath = "C:\Users\dd\Dropbox\is\CNA\libcna.dll"
+		set testLib = "C:\Users\dd\Dropbox\is\hunspell\libhunspell.dll"
+	}
+
+	
+	
+	set cna = ##class(CNA.CNA).%New(CNAPath)
+	set st = cna.LoadLibrary(testLib)
+	do $$$AssertStatusOK(st, "Load Hunspell")
+	
+	set st =  cna.ConvertStringToPointer("C:\Users\dd\Dropbox\is\hunspell\ru_RU.aff", .aff)
+	do $$$AssertStatusOK(st, "Create C-string")
+	set st =  cna.ConvertStringToPointer("C:\Users\dd\Dropbox\is\hunspell\ru_RU.dic", .dic)
+	do $$$AssertStatusOK(st, "Create C-string")
+	
+	set argTypes = ##class(%ListOfDataTypes).%New()
+	do argTypes.Insert(cna.#POINTER)
+	do argTypes.Insert(cna.#POINTER)
+	
+	set st =  cna.CallFunction("Hunspell_create", cna.#POINTER, .hunspell, argTypes, aff, dic)
+	do $$$AssertStatusOK(st, "Hunspell ID")
+	
+	set st =  cna.ConvertStringToPointer($ZCVT("лымузин", "O", "UTF8"), .bad)
+	do $$$AssertStatusOK(st, "Create C-string")
+	set st =  cna.ConvertStringToPointer($ZCVT("лимузин", "O", "UTF8"), .good)
+	do $$$AssertStatusOK(st, "Create C-string")
+	
+	set st =  cna.CallFunction("Hunspell_spell", cna.#UINT, .retVal, argTypes, hunspell, bad)
+	do $$$AssertStatusOK(st, "Call spell()")
+	do $$$AssertEquals(retVal, 0, "Incorrect word")
+	
+	set st =  cna.CallFunction("Hunspell_spell", cna.#UINT, .retVal, argTypes, hunspell, good)
+	do $$$AssertStatusOK(st, "Call spell()")
+	do $$$AssertNotEquals(retVal, 0, "Correct word")
 ]]></Implementation>
 </Method>
 </Class>

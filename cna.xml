@@ -1,20 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2014.1.1 (Build 702U)" ts="2014-07-16 17:42:17">
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2014.1.1 (Build 702U)" ts="2014-07-18 18:28:52">
 <Class name="CNA.CNA">
 <Super>%RegisteredObject</Super>
-<TimeChanged>63384,63522.185135</TimeChanged>
+<TimeChanged>63386,66289.108565</TimeChanged>
 <TimeCreated>63383,58144.669569</TimeCreated>
 
 <Property name="LibId">
 <Type>%String</Type>
+<Private>1</Private>
 </Property>
 
 <Property name="CNAId">
 <Type>%Integer</Type>
+<Private>1</Private>
 </Property>
 
 <Property name="TypeSizes">
 <Type>%String</Type>
+<Private>1</Private>
+</Property>
+
+<Property name="AllocatedMemory">
+<Type>%ListOfDataTypes</Type>
+<Private>1</Private>
 </Property>
 
 <Parameter name="VOID">
@@ -25,40 +33,64 @@
 <Default>1</Default>
 </Parameter>
 
-<Parameter name="UINT">
+<Parameter name="SCHAR">
 <Default>2</Default>
 </Parameter>
 
-<Parameter name="USHORT">
+<Parameter name="UINT">
 <Default>3</Default>
 </Parameter>
 
-<Parameter name="ULONG">
+<Parameter name="INT">
 <Default>4</Default>
 </Parameter>
 
-<Parameter name="INT64">
+<Parameter name="USHORT">
 <Default>5</Default>
 </Parameter>
 
-<Parameter name="FLOAT">
+<Parameter name="SHORT">
 <Default>6</Default>
 </Parameter>
 
-<Parameter name="DOUBLE">
+<Parameter name="ULONG">
 <Default>7</Default>
 </Parameter>
 
-<Parameter name="LONGDOUBLE">
+<Parameter name="LONG">
 <Default>8</Default>
 </Parameter>
 
-<Parameter name="POINTER">
+<Parameter name="UINT64">
 <Default>9</Default>
 </Parameter>
 
-<Parameter name="NTYPES">
+<Parameter name="INT64">
 <Default>10</Default>
+</Parameter>
+
+<Parameter name="FLOAT">
+<Default>11</Default>
+</Parameter>
+
+<Parameter name="DOUBLE">
+<Default>12</Default>
+</Parameter>
+
+<Parameter name="LONGDOUBLE">
+<Default>13</Default>
+</Parameter>
+
+<Parameter name="POINTER">
+<Default>14</Default>
+</Parameter>
+
+<Parameter name="SIZET">
+<Default>15</Default>
+</Parameter>
+
+<Parameter name="NTYPES">
+<Default>16</Default>
 </Parameter>
 
 <Method name="ThrowMessage">
@@ -68,6 +100,194 @@
 <Implementation><![CDATA[
 	set st = $$$ERROR($$$GeneralError, msg)
 	throw ##class(%Exception.StatusException).CreateFromStatus(st)
+]]></Implementation>
+</Method>
+
+<Method name="ConvertStringToPointer">
+<FormalSpec>string:%String,*pointer:%String</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	try {
+		set s2p = $zf(-4, 3, ..CNAId, "string_to_pointer")
+		set pointer = $zf(-5, ..CNAId, s2p, string)
+		do ..AllocatedMemory.Insert(pointer)
+	}  catch ex {
+		do ex.Log()
+		return ex.AsStatus()
+	}
+	Quit $$$OK
+]]></Implementation>
+</Method>
+
+<Method name="PointerGetAt">
+<Description>
+Access to array element. Operating with pointers may be unsafe!</Description>
+<FormalSpec>pointer:%String,type:%Integer,index:%Integer,*value:%String</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	try {
+	  set getAt = $zf(-4, 3, ..CNAId, "pointer_get_at")
+	  set cnaVal = $zf(-5, ..CNAId, getAt, pointer, type, index)
+	  
+	  //TODO
+	} catch ex {
+		do ex.Log()
+		return ex.AsStatus()	
+	}
+]]></Implementation>
+</Method>
+
+<Method name="PointerSetAt">
+<Description>
+Assigning to array element. Operating with pointers may be unsafe!</Description>
+<FormalSpec>pointer:%String,type:%Integer,index:%Integer,value:%String</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	try {
+	  set setAt = $zf(-4, 3, ..CNAId, "pointer_get_at")
+	  //TODO
+	  do $zf(-5, ..CNAId, setAt, pointer, $CHAR(type), index, cnaVal)
+	  
+	} catch ex {
+		do ex.Log()
+		return ex.AsStatus()	
+	}
+]]></Implementation>
+</Method>
+
+<Method name="SignedToUnsigned">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>value:%Integer,size:%Integer</FormalSpec>
+<Private>1</Private>
+<ReturnType>%Integer</ReturnType>
+<Implementation><![CDATA[
+	set max = $case(size, 1:"7F", 2:"7FFF", 4:"7FFFFFFF", 8:"7FFFFFFFFFFFFFFF")
+	set minusOne = $case(size, 1:"FF", 2:"FFFF", 4:"FFFFFFFF", 8:"FFFFFFFFFFFFFFFF")
+	
+	if (value > $zhex(max) || value <= - $zhex(max)) {
+		do ..ThrowMessage("Illegal value")
+	} 
+	if (value < 0) {
+		set value = $zhex(minusOne) + value + 1
+	}
+]]></Implementation>
+</Method>
+
+<Method name="UnsignedToSigned">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>value:%Integer,size:%Integer</FormalSpec>
+<Private>1</Private>
+<ReturnType>%Integer</ReturnType>
+<Implementation><![CDATA[
+	set max = $case(size, 1:"7F", 2:"7FFF", 4:"7FFFFFFF", 8:"7FFFFFFFFFFFFFFF")
+	set minusOne = $case(size, 1:"FF", 2:"FFFF", 4:"FFFFFFFF", 8:"FFFFFFFFFFFFFFFF")
+	
+	if (value < 0 || value > $zhex(minusOne)) {
+		do ..ThrowMessage("Illegal Value")
+	}
+	if (value > $zhex(max)) {
+		set value = value - $zhex(minusOne) - 1
+	}
+]]></Implementation>
+</Method>
+
+<Method name="ConvertIntegerFromCacheToCNA">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>type:%Integer,size:%Integer,value:%Integer</FormalSpec>
+<Private>1</Private>
+<ReturnType>%String</ReturnType>
+<Implementation><![CDATA[
+	set isUnsigned = type = ..#UCHAR  || 
+	                 type = ..#UINT   ||
+	                 type = ..#USHORT ||
+	                 type = ..#ULONG  ||
+	                 type = ..#SIZET  ||
+	                 type = ..#UINT64
+	
+	if ('isUnsigned && (size = 1 || size = 2 || size = 4)) {
+		set value = ..SignedToUnsigned(value, size)
+	} elseif (isUnsigned && size = 8) {
+		set value = ..UnsignedToSigned(value, size)
+	}
+	
+	return $case(size, 1:$CHAR(value), 2:$ZWCHAR(value), 4:$ZLCHAR(value), 8:$ZQCHAR(value))
+]]></Implementation>
+</Method>
+
+<Method name="ConvertIntegerFromCNAToCache">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>type:%Integer,size:%Integer,value:%String</FormalSpec>
+<Private>1</Private>
+<ReturnType>%Integer</ReturnType>
+<Implementation><![CDATA[
+	set isUnsigned = type = ..#UCHAR  || 
+	                 type = ..#UINT   ||
+	                 type = ..#USHORT ||
+	                 type = ..#ULONG  ||
+	                 type = ..#SIZET  ||
+	                 type = ..#UINT64
+	                 
+	set value = $case(size, 1:$ASCII(value), 2:$ZWASCII(value), 4:$ZLASCII(value), 8:$ZQASCII(value))
+	
+	if ('isUnsigned && (size = 1 || size = 2 || size = 4)) {
+		set value = ..UnsignedToSigned(value, size)
+	} elseif (isUnsigned && size = 8) {
+		set value = ..SignedToUnsigned(value, size)
+	}
+	
+	return value
+]]></Implementation>
+</Method>
+
+<Method name="ConvertFromCacheToCNA">
+<FormalSpec>type:%Integer,value:%String</FormalSpec>
+<Private>1</Private>
+<ReturnType>%String</ReturnType>
+<Implementation><![CDATA[
+	if (type >= ..#NTYPES) {
+			do ..ThrowMessage("Incorrect type")	
+	}
+	set size = $ASCII(..TypeSizes, type + 1)
+			
+	if (type = ..#FLOAT || type = ..#LONGDOUBLE) {
+		do ..ThrowMessage("#FLOAT and #LONGDOUBLE is unsupported")	
+	}elseif (type = ..#DOUBLE) {
+		set cnaVal = $ZDCHAR(value)
+	}elseif (type = ..#POINTER) {
+		set cnaVal = value
+	}elseif (type = ..#VOID) {
+		do ..ThrowMessage("#VOID may be used only for the type of return value")
+	}else {
+		set cnaVal = ..ConvertIntegerFromCacheToCNA(type, size, value)
+	}
+	if (cnaVal = "") {
+		do ..ThrowMessage("Illegal value or unsupported size of numeric type")
+	}
+	return cnaVal
+]]></Implementation>
+</Method>
+
+<Method name="ConvertFromCNAToCache">
+<FormalSpec>type:%Integer,value:%String</FormalSpec>
+<Private>1</Private>
+<ReturnType>%String</ReturnType>
+<Implementation><![CDATA[
+	if (type >= ..#NTYPES) {
+			do ..ThrowMessage("Incorrect type")	
+	}
+	set size = $ASCII(..TypeSizes, type + 1)
+	if (type = ..#FLOAT || type = ..#LONGDOUBLE) {
+		do ..ThrowMessage("Unsupported type of return value")
+	}elseif (type = ..#DOUBLE) {
+		set returnValue = $ZDASCII(value)
+	}elseif (type = ..#POINTER) {
+		set returnValue = value
+	}elseif (type = ..#VOID) {
+		set returnValue = ""
+	}else {
+		set returnValue = ..ConvertIntegerFromCNAToCache(type, size, value)
+	}
+	return returnValue
 ]]></Implementation>
 </Method>
 
@@ -87,55 +307,14 @@
 			set val = $GET(args(i))
 			set type = argTypes.GetAt(i)
 			
-			if (type >= ..#NTYPES) {
-				do ..ThrowMessage("Incorrect type")	
-			}
-			set size = $ASCII(..TypeSizes, type + 1)
-			
-			if (type = ..#FLOAT || type = ..#LONGDOUBLE) {
-				throw ..ThrowMessage("Unsupported type")	
-			}elseif (type = ..#DOUBLE) {
-				set cnaVal = $ZDCHAR(val)
-			}elseif (size = 1) {
-				set cnaVal = $CHAR(val)
-			}elseif (size = 2) {
-				set cnaVal = $ZWCHAR(val)	
-			}elseif (size = 4) {
-				set cnaVal = $ZLCHAR(val)
-			}elseif (size = 8) {
-				set cnaVal = $ZQCHAR(val)
-			}else {
-				do ..ThrowMessage("Type with unsupported size")
-			}
-			
-			if (cnaVal = "") {
-				do ..ThrowMessage("Illegal value")
-			}
-			set cnaArgs = cnaArgs _ cnaVal
+			set cnaArgs = cnaArgs _ ..ConvertFromCacheToCNA(type, val)
 			set cnaArgTypes = cnaArgTypes _ $CHAR(type)
 		}
-		
 		set cnaArgTypes = cnaArgTypes _ $CHAR(returnType)
 		set cnaRet = $zf(-5, ..CNAId, callFunc, ..LibId, name, cnaArgTypes, cnaArgs)
 				
-		set size = $ASCII(..TypeSizes, returnType + 1)
-		if (returnType = ..#FLOAT || returnType = ..#LONGDOUBLE) {
-			do ..ThrowMessage("Unsupported type of return value")	
-		}elseif (returnType = ..#DOUBLE) {
-			set returnValue = $ZDASCII(cnaRet)
-		}elseif (size = 1) {
-			set returnValue = $ASCII(cnaRet)
-		}elseif (size = 2) {
-			set returnValue = $ZWASCII(cnaRet)	
-		}elseif (size = 4) {
-			set returnValue = $ZLASCII(cnaRet)
-		}elseif (size = 8) {
-			set returnValue = $ZQASCII(cnaRet)
-		}else {
-			do ..ThrowMessage("Return value has unsupported size")
-		}
-	
-	} catch ex {
+		set returnValue =  ..ConvertFromCNAToCache(returnType, cnaRet)
+} catch ex {
 		do ex.Log()
 		return ex.AsStatus()
 	}
@@ -174,14 +353,13 @@
 </Method>
 
 <Method name="%OnNew">
-<FormalSpec>CNAPath:%String=""</FormalSpec>
+<FormalSpec>CNAPath:%String</FormalSpec>
 <Private>1</Private>
 <ReturnType>%Status</ReturnType>
 <Implementation><![CDATA[
-	if ($SYSTEM.Version.GetOS() = "UNIX") {
-		set CNAPath = "/home/dd/Dropbox/is/CNA/libcna.so"
-	} else {
-		set CNAPath = "C:\Users\dd\Dropbox\is\CNA\libcna.dll"			
+	
+	if ('$data(CNAPath) || '##class(%File).Exists(CNAPath)) {
+		do ..ThrowMessage("CNA file doesn't exists")	
 	}
 	
 	try {
@@ -202,6 +380,11 @@
 <ReturnType>%Status</ReturnType>
 <Implementation><![CDATA[
 	try {
+		set s2p = $zf(-4, 3, ..CNAId, "free_pointer")
+		for i=1:1:..AllocatedMemory.Size {
+			do $zf(-5, ..CNAId, s2p, ..AllocatedMemory.GetAt(i))		
+		}
+
 		do $zf(-4, 2, ..CNAId)
 	} catch ex {
 		do ex.Log()

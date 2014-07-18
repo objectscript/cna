@@ -32,3 +32,21 @@ x(int64_t x)
 {
   return x;
 }
+
+EXPORT unsigned int
+cstrlen(const char *s)
+{
+	unsigned int i;
+	for (i = 0; *s; ++i, ++s) {}
+	return i;
+}
+
+EXPORT unsigned int
+print(const char *s)
+{
+	FILE *fd = fopen("C:\\Users\\dd\\Dropbox\\is\\CNA\\log.txt", "a");
+	if (!fd) { return 25; }
+	fprintf(fd, "\n\t%s\n", s);
+	fclose(fd);
+	return 99;
+}

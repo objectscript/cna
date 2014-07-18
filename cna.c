@@ -51,7 +51,7 @@ logger(const char *format, ...)
 
 
 int
-assign_pointer_to_ZARRAYP(ZARRAYP a, const void *p)
+assign_pointer_to_ZARRAYP(ZARRAYP a, void *p)
 {
   a->len = sizeof(p);
   memcpy(a->data, (void *)&p, a->len);
@@ -100,17 +100,23 @@ free_library(ZARRAYP libID)
 enum TYPE {
   CNA_VOID = 0,
   CNA_UCHAR = 1,
-  CNA_UINT = 2,
-  CNA_USHORT = 3,
-  CNA_ULONG = 4,
-  CNA_INT64 = 5,
-  CNA_FLOAT = 6,
-  CNA_DOUBLE = 7,
-  CNA_LONGDOUBLE = 8,
-  CNA_POINTER = 9
+  CNA_SCHAR = 2,
+  CNA_UINT = 3,
+  CNA_INT = 4,
+  CNA_USHORT = 5,
+  CNA_SHORT = 6,
+  CNA_ULONG = 7,
+  CNA_LONG = 8, 
+  CNA_UINT64 = 9,
+  CNA_INT64 = 10,
+  CNA_FLOAT = 11,
+  CNA_DOUBLE = 12,
+  CNA_LONGDOUBLE = 13,
+  CNA_POINTER = 14,
+  CNA_SIZET = 15,
 };
 
-const int ntypes = 10;
+const int ntypes = 16;
 
 inline unsigned char
 get_sizeof(enum TYPE type)
@@ -118,14 +124,20 @@ get_sizeof(enum TYPE type)
   switch (type) {
     case CNA_VOID: return 0;
     case CNA_UCHAR: return sizeof(unsigned char);
+    case CNA_SCHAR: return sizeof(signed char);
     case CNA_UINT: return sizeof(unsigned int);
+    case CNA_INT: return sizeof(int);
     case CNA_USHORT: return sizeof(unsigned short);
+    case CNA_SHORT: return sizeof(short);
     case CNA_ULONG: return sizeof(unsigned long);
+    case CNA_LONG: return sizeof(long);
+    case CNA_UINT64: return sizeof(uint64_t);
     case CNA_INT64: return sizeof(int64_t);
     case CNA_FLOAT: return sizeof(float);
     case CNA_DOUBLE: return sizeof(double);
     case CNA_LONGDOUBLE: return sizeof(long double);
     case CNA_POINTER: return sizeof(void *);
+    case CNA_SIZET: return sizeof(size_t);
     default: return 0;
   }
 }
@@ -160,14 +172,29 @@ call_function(ZARRAYP libID, const char *funcname, ZARRAYP argtypes, ZARRAYP arg
       case CNA_UCHAR:
         ffi_types[i] = &ffi_type_uchar;
         break;
+      case CNA_SCHAR:
+        ffi_types[i] = &ffi_type_schar;
+        break;
       case CNA_UINT:
         ffi_types[i] = &ffi_type_uint;
+        break;
+      case CNA_INT:
+        ffi_types[i] = &ffi_type_sint;
         break;
       case CNA_USHORT:
         ffi_types[i] = &ffi_type_ushort;
         break;
+      case CNA_SHORT:
+        ffi_types[i] = &ffi_type_sshort;
+        break;
       case CNA_ULONG:
         ffi_types[i] = &ffi_type_ulong;
+        break;
+      case CNA_LONG:
+        ffi_types[i] = &ffi_type_slong;
+        break;
+      case CNA_UINT64:
+        ffi_types[i] = &ffi_type_uint64;
         break;
       case CNA_INT64:
         ffi_types[i] = &ffi_type_sint64;
@@ -230,9 +257,95 @@ call_function(ZARRAYP libID, const char *funcname, ZARRAYP argtypes, ZARRAYP arg
   return ZF_SUCCESS;
 }
 
+int
+string_to_pointer(char *s, ZARRAYP p)
+{
+  char *copy = (char *)malloc(strlen(s) * sizeof(char));
+  strcpy(copy, s);
+  assign_pointer_to_ZARRAYP(p, copy);
+  return ZF_SUCCESS;
+}
+
+int
+free_pointer(ZARRAYP p)
+{
+  void *s;
+  if (assign_ZARRAYP_to_pointer(&s, p)) {
+    return ZF_FAILURE;
+  }
+  free(s);
+  return ZF_SUCCESS;
+}
+
+int
+pointer_set_at(ZARRAYP p, ZARRAYP ztype, ZARRAYP index, ZARRAYP value)
+{
+  void *array;
+  if (ztype->len != sizeof(unsigned char)) {
+    logger("Wrong size of ZARRAY 'pointer'\n");
+    return ZF_FAILURE;
+  }
+  assign_ZARRAYP_to_pointer(&array, p);
+  
+  if (ztype->len != sizeof(unsigned char)) {
+    logger("Wrong size of ZARRAY 'type'\n");
+    return ZF_FAILURE;
+  }
+  unsigned char type = *((unsigned char *)ztype->data);
+  
+  if (value->len != get_sizeof(type)) {
+    logger("Wrong size of ZARRAY 'value'\n");
+    return ZF_FAILURE;
+  }
+
+  if (index->len != sizeof(size_t)) {
+    logger("Wrong size of ZARRAY 'value'\n");
+    return ZF_FAILURE;
+  }  
+
+
+  memcpy(array + *((size_t *)index->data), value->data, get_sizeof(type));
+  return ZF_SUCCESS;
+}
+
+int
+pointer_get_at(ZARRAYP p, ZARRAYP ztype, ZARRAYP index, ZARRAYP value)
+{
+  void *array;
+  if (ztype->len != sizeof(unsigned char)) {
+    logger("Wrong size of ZARRAY 'pointer'\n");
+    return ZF_FAILURE;
+  }
+  assign_ZARRAYP_to_pointer(&array, p);
+  
+  if (ztype->len != sizeof(unsigned char)) {
+    logger("Wrong size of ZARRAY 'type'\n");
+    return ZF_FAILURE;
+  }
+  unsigned char type = *((unsigned char *)ztype->data);
+  
+  if (value->len != get_sizeof(type)) {
+    logger("Wrong size of ZARRAY 'value'\n");
+    return ZF_FAILURE;
+  }
+
+  if (index->len != sizeof(size_t)) {
+    logger("Wrong size of ZARRAY 'value'\n");
+    return ZF_FAILURE;
+  }  
+
+
+  memcpy(value->data, array + *((size_t *)index->data), get_sizeof(type));
+  return ZF_SUCCESS;
+}
+
 ZFBEGIN
 ZFENTRY("get_sizes", "B", get_sizes)
 ZFENTRY("call_function", "bcbbB", call_function)
 ZFENTRY("load_library", "cB", load_library)
 ZFENTRY("free_library", "b", free_library)
+ZFENTRY("string_to_pointer", "cB", string_to_pointer)
+ZFENTRY("free_pointer", "b", free_pointer)
+ZFENTRY("pointer_set_at", "bbbb", pointer_set_at)
+ZFENTRY("pointer_get_at", "bbbB", pointer_get_at)
 ZFEND
