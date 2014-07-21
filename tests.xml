@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2014.1.1 (Build 702U)" ts="2014-07-18 18:28:52">
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2014.1.1 (Build 702U)" ts="2014-07-21 18:56:15">
 <Class name="CNA.Tests">
 <Super>%UnitTest.TestCase</Super>
-<TimeChanged>63386,66318.610292</TimeChanged>
+<TimeChanged>63389,68163.827784</TimeChanged>
 <TimeCreated>63384,43091.390095</TimeCreated>
 
 <Method name="TestLowLevel">
@@ -22,30 +22,30 @@
 		do $zf(-3, CNAPath)
 		
 		set libID = $zf(-3, "", "load_library", testLib)
-			
+		
 		set func = "sum"
-		set argTypes = $CHAR(2, 2, 2, 2, 2, 2)
+		set argTypes = $CHAR(3, 3, 3, 3, 3, 3)
 		set args = $ZLCHAR(12, 10, 35, 321, 21)
 		set retVal = $zf(-3, "", "call_function", libID, func, argTypes, args)
 		set retVal = $ZLASCII(retVal)
 		do $$$AssertEquals(retVal, 399, "Check sum() from libsq: 12 + 10 + 35 + 321 + 21 = 399")
-
+		
 		set func = "mul"
-		set argTypes = $CHAR(5, 7, 7)
+		set argTypes = $CHAR(9, 12, 12)
 		set args = $ZQCHAR(10) _ $ZDCHAR($DOUBLE(1.5))
 		set retVal = $zf(-3, "", "call_function", libID, func, argTypes, args)
 		set retVal = $ZDASCII(retVal)
 		do $$$AssertEquals(retVal, $double(15), "Check mul() from libsq: 10 * 1.5 = 15")
 
 		set func = "x"
-		set argTypes = $CHAR(5, 5)
+		set argTypes = $CHAR(9, 9)
 		set args = $ZQCHAR(-2384929929829)
 		set retVal = $zf(-3, "", "call_function", libID, func, argTypes, args)
 		set retVal =  $ZQASCII(retVal)
 		do $$$AssertEquals(retVal, -2384929929829, "Check x() from libsq:" _ retVal _ " = -2384929929829")
 		
 		set func = "square"
-		set argTypes = $CHAR(7, 7)
+		set argTypes = $CHAR(12, 12)
 		set args = $ZDCHAR($DOUBLE(1.2))
 		set retVal = $zf(-3, "", "call_function", libID, func, argTypes, args)
 		set retVal = $ZDASCII(retVal)
@@ -57,6 +57,7 @@
 	
 			write $system.Status.GetErrorText(ex.AsStatus(),"ru"),!
 			do $zf(-3, "")
+			do $$$AssertEquals(0, 1, "Exception were catched")
 	}
 ]]></Implementation>
 </Method>
@@ -106,6 +107,11 @@
 
 	set st = cna.CallFunction("sum", cna.#UINT, .retVal, argTypes, 12431231231231231231312312, 113, 121, 12123, 121)
 	do $$$AssertStatusNotOK(st, "Invalid argument value: 12431231231231231231312312 for UINT")
+	
+	do argTypes.Clear()
+	set st = cna.CallFunction("five", cna.#INT, .retVal, argTypes)
+ 	do $$$AssertStatusOK(st, "Call five() from test library")
+	do $$$AssertEquals(retVal, 5, "Check return value of five()")
 
 	
 	set st = cna.FreeLibrary()
@@ -155,6 +161,129 @@
 	set st =  cna.CallFunction("Hunspell_spell", cna.#UINT, .retVal, argTypes, hunspell, good)
 	do $$$AssertStatusOK(st, "Call spell()")
 	do $$$AssertNotEquals(retVal, 0, "Correct word")
+]]></Implementation>
+</Method>
+
+<Method name="TestPointers">
+<Implementation><![CDATA[
+	if ($SYSTEM.Version.GetOS() = "UNIX") {
+		set CNAPath = "C:\Users\dd\Dropbox\is\CNA\libcna.dll"  
+		set testLib ="C:\Users\dd\Dropbox\is\CNA\libsq.dll"		
+	} else {
+		set CNAPath = "C:\Users\dd\Dropbox\is\CNA\libcna.dll"  
+		set testLib ="C:\Users\dd\Dropbox\is\CNA\libsq.dll"			
+	}
+	
+	set cna = ##class(CNA.CNA).%New(CNAPath)
+	set st = cna.LoadLibrary(testLib)
+	do $$$AssertStatusOK(st, "Load sqlib")
+	
+	set argTypes = ##class(%ListOfDataTypes).%New()
+	do argTypes.Insert(cna.#SIZET)
+	
+	set st = cna.CallFunction("mal", cna.#POINTER, .memory, argTypes, 8)
+	do $$$AssertStatusOK(st, "Allocate memory")
+	
+	set st = cna.PointerSetAt(memory, cna.#UINT, 0, 12345678)
+	do $$$AssertStatusOK(st, "Set memory[0] to 12345678")
+	
+	set st = cna.PointerSetAt(memory, cna.#UINT, 1, 1313)
+	do $$$AssertStatusOK(st, "Set memory[1] to 1313")
+	
+	set st = cna.PointerGetAt(memory, cna.#UINT, 0, .mem0)
+	do $$$AssertStatusOK(st, "Get memory[0]")
+	do $$$AssertEquals(mem0, 12345678, "memory[0] must be equal to 12345678")
+	
+	set st = cna.PointerGetAt(memory, cna.#UINT, 1, .mem1)
+	do $$$AssertStatusOK(st, "Get memory[1]")
+	do $$$AssertEquals(mem1, 1313, "memory[1] must be equal to 1313")
+	
+	do argTypes.Clear()
+	do argTypes.Insert(cna.#POINTER)
+	
+	set st = cna.CallFunction("fr", cna.#VOID, , argTypes, memory)
+	do $$$AssertStatusOK(st, "Free memory")
+]]></Implementation>
+</Method>
+
+<Method name="TestIntegers">
+<Implementation><![CDATA[
+	if ($SYSTEM.Version.GetOS() = "UNIX") {
+		set CNAPath = "C:\Users\dd\Dropbox\is\CNA\libcna.dll"  
+		set testLib ="C:\Users\dd\Dropbox\is\CNA\libsq.dll"		
+	} else {
+		set CNAPath = "C:\Users\dd\Dropbox\is\CNA\libcna.dll"  
+		set testLib ="C:\Users\dd\Dropbox\is\CNA\libsq.dll"			
+	}
+	
+	set cna = ##class(CNA.CNA).%New(CNAPath)
+	set st = cna.LoadLibrary(testLib)
+	do $$$AssertStatusOK(st, "Load sqlib")
+
+	set argTypes = ##class(%ListOfDataTypes).%New()
+	
+	do argTypes.Clear()
+	do argTypes.Insert(cna.#UCHAR)
+	set st = cna.CallFunction("uchar", cna.#UCHAR, .retVal, argTypes, $zhex("FD"))
+	do $$$AssertStatusOK(st, "Call uchar()")
+	do $$$AssertEquals(retVal, $zhex("FD"), "Check uchar() return value")
+	
+	do argTypes.Clear()
+	do argTypes.Insert(cna.#SCHAR)
+	set st = cna.CallFunction("schar", cna.#SCHAR, .retVal, argTypes, -3)
+	do $$$AssertStatusOK(st, "Call schar()")
+	do $$$AssertEquals(retVal, -3, "Check schar() return value")
+	
+	do argTypes.Clear()
+	do argTypes.Insert(cna.#USHORT)
+	set st = cna.CallFunction("ushort", cna.#USHORT, .retVal, argTypes, $zhex("FFFD"))
+	do $$$AssertStatusOK(st, "Call ushort()")
+	do $$$AssertEquals(retVal, $zhex("FFFD"), "Check ushort() return value")
+	
+	do argTypes.Clear()
+	do argTypes.Insert(cna.#SHORT)
+	set st = cna.CallFunction("sshort", cna.#SHORT, .retVal, argTypes, -3)
+	do $$$AssertStatusOK(st, "Call sshort()")
+	do $$$AssertEquals(retVal, -3, "Check sshort() return value")
+
+	
+	do argTypes.Clear()
+	do argTypes.Insert(cna.#UINT)
+	set st = cna.CallFunction("uint", cna.#UINT, .retVal, argTypes, $zhex("FFFFFFFD"))
+	do $$$AssertStatusOK(st, "Call uint()")
+	do $$$AssertEquals(retVal, $zhex("FFFFFFFD"), "Check uint() return value")
+	
+	do argTypes.Clear()
+	do argTypes.Insert(cna.#INT)
+	set st = cna.CallFunction("sint", cna.#INT, .retVal, argTypes, -3)
+	do $$$AssertStatusOK(st, "Call sint()")
+	do $$$AssertEquals(retVal, -3, "Check sint() return value")
+
+	
+	do argTypes.Clear()
+	do argTypes.Insert(cna.#ULONG)
+	set st = cna.CallFunction("ulong", cna.#ULONG, .retVal, argTypes, $zhex("FFFFFFFD"))
+	do $$$AssertStatusOK(st, "Call ulong()")
+	do $$$AssertEquals(retVal, $zhex("FFFFFFFD"), "Check ulong() return value")
+	
+	do argTypes.Clear()
+	do argTypes.Insert(cna.#LONG)
+	set st = cna.CallFunction("slong", cna.#LONG, .retVal, argTypes, -3)
+	do $$$AssertStatusOK(st, "Call slong()")
+	do $$$AssertEquals(retVal, -3, "Check slong() return value")
+
+	
+	do argTypes.Clear()
+	do argTypes.Insert(cna.#UINT64)
+	set st = cna.CallFunction("uint64", cna.#UINT64, .retVal, argTypes, 1234567890)
+	do $$$AssertStatusOK(st, "Call uint64()")
+	do $$$AssertEquals(retVal, 1234567890, "Check uint64() return value")
+	
+	do argTypes.Clear()
+	do argTypes.Insert(cna.#INT64)
+	set st = cna.CallFunction("sint64", cna.#INT64, .retVal, argTypes, -3)
+	do $$$AssertStatusOK(st, "Call sint64()")
+	do $$$AssertEquals(retVal, -3, "Check sint64() return value")
 ]]></Implementation>
 </Method>
 </Class>

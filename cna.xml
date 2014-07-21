@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2014.1.1 (Build 702U)" ts="2014-07-18 18:28:52">
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2014.1.1 (Build 702U)" ts="2014-07-21 18:56:15">
 <Class name="CNA.CNA">
 <Super>%RegisteredObject</Super>
-<TimeChanged>63386,66289.108565</TimeChanged>
+<TimeChanged>63389,68116.770797</TimeChanged>
 <TimeCreated>63383,58144.669569</TimeCreated>
 
 <Property name="LibId">
@@ -127,13 +127,15 @@ Access to array element. Operating with pointers may be unsafe!</Description>
 <Implementation><![CDATA[
 	try {
 	  set getAt = $zf(-4, 3, ..CNAId, "pointer_get_at")
-	  set cnaVal = $zf(-5, ..CNAId, getAt, pointer, type, index)
+	  set cnaIndex = ..ConvertFromCacheToCNA(..#SIZET, index)
+	  set cnaVal = $zf(-5, ..CNAId, getAt, pointer, $CHAR(type), cnaIndex)
 	  
-	  //TODO
+	  set value = ..ConvertFromCNAToCache(type, cnaVal)
 	} catch ex {
 		do ex.Log()
 		return ex.AsStatus()	
 	}
+	Quit $$$OK
 ]]></Implementation>
 </Method>
 
@@ -144,14 +146,16 @@ Assigning to array element. Operating with pointers may be unsafe!</Description>
 <ReturnType>%Status</ReturnType>
 <Implementation><![CDATA[
 	try {
-	  set setAt = $zf(-4, 3, ..CNAId, "pointer_get_at")
-	  //TODO
-	  do $zf(-5, ..CNAId, setAt, pointer, $CHAR(type), index, cnaVal)
+	  set setAt = $zf(-4, 3, ..CNAId, "pointer_set_at")
+	  set cnaVal = ..ConvertFromCacheToCNA(type, value)
+	  set cnaIndex = ..ConvertFromCacheToCNA(..#SIZET, index)
+	  do $zf(-5, ..CNAId, setAt, pointer, $CHAR(type), cnaIndex, cnaVal)
 	  
 	} catch ex {
 		do ex.Log()
 		return ex.AsStatus()	
 	}
+	Quit $$$OK
 ]]></Implementation>
 </Method>
 
@@ -164,12 +168,13 @@ Assigning to array element. Operating with pointers may be unsafe!</Description>
 	set max = $case(size, 1:"7F", 2:"7FFF", 4:"7FFFFFFF", 8:"7FFFFFFFFFFFFFFF")
 	set minusOne = $case(size, 1:"FF", 2:"FFFF", 4:"FFFFFFFF", 8:"FFFFFFFFFFFFFFFF")
 	
-	if (value > $zhex(max) || value <= - $zhex(max)) {
+	if ((value > $zhex(max)) || (value <= - $zhex(max))) {
 		do ..ThrowMessage("Illegal value")
 	} 
 	if (value < 0) {
 		set value = $zhex(minusOne) + value + 1
 	}
+	return value
 ]]></Implementation>
 </Method>
 
@@ -182,12 +187,13 @@ Assigning to array element. Operating with pointers may be unsafe!</Description>
 	set max = $case(size, 1:"7F", 2:"7FFF", 4:"7FFFFFFF", 8:"7FFFFFFFFFFFFFFF")
 	set minusOne = $case(size, 1:"FF", 2:"FFFF", 4:"FFFFFFFF", 8:"FFFFFFFFFFFFFFFF")
 	
-	if (value < 0 || value > $zhex(minusOne)) {
+	if ((value < 0) || (value > $zhex(minusOne))) {
 		do ..ThrowMessage("Illegal Value")
 	}
 	if (value > $zhex(max)) {
 		set value = value - $zhex(minusOne) - 1
 	}
+	return value
 ]]></Implementation>
 </Method>
 
@@ -197,17 +203,18 @@ Assigning to array element. Operating with pointers may be unsafe!</Description>
 <Private>1</Private>
 <ReturnType>%String</ReturnType>
 <Implementation><![CDATA[
-	set isUnsigned = type = ..#UCHAR  || 
-	                 type = ..#UINT   ||
-	                 type = ..#USHORT ||
-	                 type = ..#ULONG  ||
-	                 type = ..#SIZET  ||
-	                 type = ..#UINT64
+	set isUnsigned = (type = ..#UCHAR ) || 
+	                 (type = ..#UINT  ) ||
+	                 (type = ..#USHORT) ||
+	                 (type = ..#ULONG ) ||
+	                 (type = ..#SIZET ) ||
+	                 (type = ..#UINT64)
 	
-	if ('isUnsigned && (size = 1 || size = 2 || size = 4)) {
+	if (('isUnsigned) && ((size = 1) || (size = 2) || (size = 4))) {
 		set value = ..SignedToUnsigned(value, size)
-	} elseif (isUnsigned && size = 8) {
-		set value = ..UnsignedToSigned(value, size)
+	} elseif (isUnsigned && (size = 8)) {
+		//set value = ..UnsignedToSigned(value, size)
+		//TODO: and support for uint64
 	}
 	
 	return $case(size, 1:$CHAR(value), 2:$ZWCHAR(value), 4:$ZLCHAR(value), 8:$ZQCHAR(value))
@@ -220,19 +227,20 @@ Assigning to array element. Operating with pointers may be unsafe!</Description>
 <Private>1</Private>
 <ReturnType>%Integer</ReturnType>
 <Implementation><![CDATA[
-	set isUnsigned = type = ..#UCHAR  || 
-	                 type = ..#UINT   ||
-	                 type = ..#USHORT ||
-	                 type = ..#ULONG  ||
-	                 type = ..#SIZET  ||
-	                 type = ..#UINT64
+	set isUnsigned = (type = ..#UCHAR ) || 
+	                 (type = ..#UINT  ) ||
+	                 (type = ..#USHORT) ||
+	                 (type = ..#ULONG ) ||
+	                 (type = ..#SIZET ) ||
+	                 (type = ..#UINT64)
 	                 
 	set value = $case(size, 1:$ASCII(value), 2:$ZWASCII(value), 4:$ZLASCII(value), 8:$ZQASCII(value))
 	
-	if ('isUnsigned && (size = 1 || size = 2 || size = 4)) {
+	if (('isUnsigned) && ((size = 1) || (size = 2) || (size = 4))) {
 		set value = ..UnsignedToSigned(value, size)
-	} elseif (isUnsigned && size = 8) {
-		set value = ..SignedToUnsigned(value, size)
+	} elseif (isUnsigned && (size = 8)) {
+		//set value = ..SignedToUnsigned(value, size)
+		//TODO: and support for uint64
 	}
 	
 	return value
@@ -249,7 +257,7 @@ Assigning to array element. Operating with pointers may be unsafe!</Description>
 	}
 	set size = $ASCII(..TypeSizes, type + 1)
 			
-	if (type = ..#FLOAT || type = ..#LONGDOUBLE) {
+	if ((type = ..#FLOAT) || (type = ..#LONGDOUBLE)) {
 		do ..ThrowMessage("#FLOAT and #LONGDOUBLE is unsupported")	
 	}elseif (type = ..#DOUBLE) {
 		set cnaVal = $ZDCHAR(value)
@@ -276,7 +284,7 @@ Assigning to array element. Operating with pointers may be unsafe!</Description>
 			do ..ThrowMessage("Incorrect type")	
 	}
 	set size = $ASCII(..TypeSizes, type + 1)
-	if (type = ..#FLOAT || type = ..#LONGDOUBLE) {
+	if ((type = ..#FLOAT) || (type = ..#LONGDOUBLE)) {
 		do ..ThrowMessage("Unsupported type of return value")
 	}elseif (type = ..#DOUBLE) {
 		set returnValue = $ZDASCII(value)
@@ -297,6 +305,9 @@ Assigning to array element. Operating with pointers may be unsafe!</Description>
 <Implementation><![CDATA[
 	try {
 		set callFunc = $zf(-4, 3, ..CNAId, "call_function")
+		if ('$data(args)) {
+			set args = 0
+		}
 		if (argTypes.Size '= args) {
 			do ..ThrowMessage("Size of collection of argument types and number of arguments must be equal.")
 		}
@@ -358,7 +369,7 @@ Assigning to array element. Operating with pointers may be unsafe!</Description>
 <ReturnType>%Status</ReturnType>
 <Implementation><![CDATA[
 	
-	if ('$data(CNAPath) || '##class(%File).Exists(CNAPath)) {
+	if (('$data(CNAPath)) || ('##class(%File).Exists(CNAPath))) {
 		do ..ThrowMessage("CNA file doesn't exists")	
 	}
 	

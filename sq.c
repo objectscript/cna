@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdint.h>
-
-typedef unsigned int uint; 
+#include <stdlib.h>
 
 #ifdef _WIN32
   #define EXPORT __declspec(dllexport)
@@ -15,8 +14,8 @@ square(double a)
   return a * a;
 }
 
-EXPORT uint
-sum(uint a, uint b, uint c, uint d, uint e)
+EXPORT unsigned
+sum(unsigned a, unsigned b, unsigned c, unsigned d, unsigned e)
 {
   return a + b + c + d + e;
 }
@@ -50,3 +49,32 @@ print(const char *s)
 	fclose(fd);
 	return 99;
 }
+
+EXPORT void *
+mal(size_t size)
+{
+	return malloc(size);
+}
+
+EXPORT void
+fr(void *mem)
+{
+	free(mem);
+}
+
+EXPORT int
+five(void)
+{
+	return 5;
+}
+
+EXPORT   signed char  schar (   signed char  x) { return x; }
+EXPORT unsigned char  uchar ( unsigned char  x) { return x; }
+EXPORT   signed short sshort(   signed short x) { return x; }
+EXPORT unsigned short ushort( unsigned short x) { return x; }
+EXPORT   signed int   sint  (   signed int   x) { return x; }
+EXPORT unsigned int   uint  ( unsigned int   x) { return x; }
+EXPORT   signed long  slong (   signed long  x) { return x; }
+EXPORT unsigned long  ulong ( unsigned long  x) { return x; }
+EXPORT  int64_t       sint64( int64_t        x) { return x; }
+EXPORT uint64_t       uint64( uint64_t       x) { return x; }

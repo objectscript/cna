@@ -120,7 +120,7 @@ enum TYPE {
 const int ntypes = 16;
 
 inline unsigned char
-get_sizeof(enum TYPE type)
+get_size(enum TYPE type)
 {
   switch (type) {
     case CNA_VOID: return 0;
@@ -149,7 +149,7 @@ get_sizes(ZARRAYP retval)
   retval->len = ntypes;
   int i;
   for (i = 0; i < ntypes; ++i) {
-    retval->data[i] = get_sizeof(i);
+    retval->data[i] = get_size(i);
   }
   return ZF_SUCCESS;
 }
@@ -212,6 +212,15 @@ call_function(ZARRAYP libID, const char *funcname, ZARRAYP argtypes, ZARRAYP arg
       case CNA_POINTER:
         ffi_types[i] = &ffi_type_pointer;
         break;
+      case CNA_SIZET:
+        switch (get_size(CNA_SIZET)) {
+          case 1: ffi_types[i] = &ffi_type_uint8;  break;
+          case 2: ffi_types[i] = &ffi_type_uint16; break;
+          case 4: ffi_types[i] = &ffi_type_uint32; break;
+          case 8: ffi_types[i] = &ffi_type_uint64; break;
+          default: logger("Unsupported size of size_t\n"); return ZF_FAILURE;
+        }
+        break;
       case CNA_VOID: 
         if (i == nargs) {
           ffi_types[i] = &ffi_type_void;
@@ -222,7 +231,7 @@ call_function(ZARRAYP libID, const char *funcname, ZARRAYP argtypes, ZARRAYP arg
         logger("Unknown data type\n");
         return ZF_FAILURE;
     }
-    size = get_sizeof(argtypes->data[i]);
+    size = get_size(argtypes->data[i]);
     ffi_values[i] = args->data + fullsize;
     fullsize += size;
   }
@@ -281,6 +290,7 @@ free_pointer(ZARRAYP p)
 int
 pointer_set_at(ZARRAYP p, ZARRAYP ztype, ZARRAYP index, ZARRAYP value)
 {
+  logger("pointer_set_at():\n\t%u\n", *((unsigned *)value->data));
   void *array;
   if (ztype->len != sizeof(unsigned char)) {
     logger("Wrong size of ZARRAY 'pointer'\n");
@@ -293,25 +303,28 @@ pointer_set_at(ZARRAYP p, ZARRAYP ztype, ZARRAYP index, ZARRAYP value)
     return ZF_FAILURE;
   }
   unsigned char type = *((unsigned char *)ztype->data);
-  
-  if (value->len != get_sizeof(type)) {
+  size_t size = get_size(type);
+  if (value->len != size) {
     logger("Wrong size of ZARRAY 'value'\n");
     return ZF_FAILURE;
   }
 
   if (index->len != sizeof(size_t)) {
-    logger("Wrong size of ZARRAY 'value'\n");
+    logger("Wrong size of ZARRAY index\n");
     return ZF_FAILURE;
   }  
 
 
-  memcpy(array + *((size_t *)index->data), value->data, get_sizeof(type));
+  void *address = array + (*((size_t *)index->data)) * size;
+  memcpy(address, value->data, size);
+  logger("0x%x: %u\n",  address, *((unsigned *)address));
   return ZF_SUCCESS;
 }
 
 int
 pointer_get_at(ZARRAYP p, ZARRAYP ztype, ZARRAYP index, ZARRAYP value)
 {
+  logger("pointer_get_at():\n");
   void *array;
   if (ztype->len != sizeof(unsigned char)) {
     logger("Wrong size of ZARRAY 'pointer'\n");
@@ -324,19 +337,18 @@ pointer_get_at(ZARRAYP p, ZARRAYP ztype, ZARRAYP index, ZARRAYP value)
     return ZF_FAILURE;
   }
   unsigned char type = *((unsigned char *)ztype->data);
-  
-  if (value->len != get_sizeof(type)) {
-    logger("Wrong size of ZARRAY 'value'\n");
-    return ZF_FAILURE;
-  }
+  size_t size = get_size(type);
 
   if (index->len != sizeof(size_t)) {
-    logger("Wrong size of ZARRAY 'value'\n");
+    logger("Wrong size of ZARRAY 'index'\n");
     return ZF_FAILURE;
   }  
 
 
-  memcpy(value->data, array + *((size_t *)index->data), get_sizeof(type));
+  void *address = array + (*((size_t *)index->data)) * size;
+  value->len = size;
+  memcpy(value->data, address, size);
+  logger("0x%x: %u\n",  address, *((unsigned *)address));
   return ZF_SUCCESS;
 }
 
