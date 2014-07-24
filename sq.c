@@ -35,37 +35,37 @@ x(int64_t x)
 EXPORT unsigned int
 cstrlen(const char *s)
 {
-	unsigned int i;
-	for (i = 0; *s; ++i, ++s) {}
-	return i;
+  unsigned int i;
+  for (i = 0; *s; ++i, ++s) {}
+  return i;
 }
 
 EXPORT unsigned int
 print(const char *s)
 {
-	FILE *fd = fopen("C:\\Users\\dd\\Dropbox\\is\\CNA\\log.txt", "a");
-	if (!fd) { return 25; }
-	fprintf(fd, "\n\t%s\n", s);
-	fclose(fd);
-	return 99;
+  FILE *fd = fopen("C:\\Users\\dd\\Dropbox\\is\\CNA\\log.txt", "a");
+  if (!fd) { return 25; }
+  fprintf(fd, "\n\t%s\n", s);
+  fclose(fd);
+  return 99;
 }
 
 EXPORT void *
 mal(size_t size)
 {
-	return malloc(size);
+  return malloc(size);
 }
 
 EXPORT void
 fr(void *mem)
 {
-	free(mem);
+  free(mem);
 }
 
 EXPORT int
 five(void)
 {
-	return 5;
+  return 5;
 }
 
 EXPORT   signed char  schar (   signed char  x) { return x; }
@@ -78,3 +78,26 @@ EXPORT   signed long  slong (   signed long  x) { return x; }
 EXPORT unsigned long  ulong ( unsigned long  x) { return x; }
 EXPORT  int64_t       sint64( int64_t        x) { return x; }
 EXPORT uint64_t       uint64( uint64_t       x) { return x; }
+
+
+struct st {
+  char a;
+  long long b;
+  char c;
+};
+
+EXPORT long long
+sum_st(struct st x)
+{
+  return x.a + x.b + x.c;
+}
+
+EXPORT struct st
+create_st(void)
+{
+  struct st a;
+  a.a = 1;
+  a.b = 2;
+  a.c = 3;
+  return a;
+}

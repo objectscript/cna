@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2014.1.1 (Build 702U)" ts="2014-07-21 18:56:15">
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2014.1.1 (Build 702U)" ts="2014-07-24 14:52:59">
 <Class name="CNA.CNA">
 <Super>%RegisteredObject</Super>
-<TimeChanged>63389,68116.770797</TimeChanged>
+<TimeChanged>63392,53517.09152</TimeChanged>
 <TimeCreated>63383,58144.669569</TimeCreated>
 
 <Property name="LibId">
@@ -89,8 +89,12 @@
 <Default>15</Default>
 </Parameter>
 
-<Parameter name="NTYPES">
+<Parameter name="STRUCT">
 <Default>16</Default>
+</Parameter>
+
+<Parameter name="NTYPES">
+<Default>17</Default>
 </Parameter>
 
 <Method name="ThrowMessage">
@@ -103,59 +107,111 @@
 ]]></Implementation>
 </Method>
 
-<Method name="ConvertStringToPointer">
-<FormalSpec>string:%String,*pointer:%String</FormalSpec>
-<ReturnType>%Status</ReturnType>
+<Method name="CreateStructType">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>types:%ListOfDataTypes</FormalSpec>
+<Private>1</Private>
+<ReturnType>%String</ReturnType>
 <Implementation><![CDATA[
-	try {
-		set s2p = $zf(-4, 3, ..CNAId, "string_to_pointer")
-		set pointer = $zf(-5, ..CNAId, s2p, string)
-		do ..AllocatedMemory.Insert(pointer)
-	}  catch ex {
-		do ex.Log()
-		return ex.AsStatus()
+	set structType = $CHAR(..#STRUCT, types.Size)
+	for i=1:1:types.Size {
+		set type = types.GetAt(i)
+		set structType = structType _ ..ConvertTypeFromCacheToCNA(type)
 	}
-	Quit $$$OK
+	return structType
 ]]></Implementation>
 </Method>
 
-<Method name="PointerGetAt">
-<Description>
-Access to array element. Operating with pointers may be unsafe!</Description>
-<FormalSpec>pointer:%String,type:%Integer,index:%Integer,*value:%String</FormalSpec>
-<ReturnType>%Status</ReturnType>
+<Method name="ConvertTypeFromCacheToCNA">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>type:%String</FormalSpec>
+<Private>1</Private>
+<ReturnType>%String</ReturnType>
 <Implementation><![CDATA[
-	try {
-	  set getAt = $zf(-4, 3, ..CNAId, "pointer_get_at")
-	  set cnaIndex = ..ConvertFromCacheToCNA(..#SIZET, index)
-	  set cnaVal = $zf(-5, ..CNAId, getAt, pointer, $CHAR(type), cnaIndex)
-	  
-	  set value = ..ConvertFromCNAToCache(type, cnaVal)
-	} catch ex {
-		do ex.Log()
-		return ex.AsStatus()	
+	if ($ISOBJECT(type)) {
+		return ..CreateStructType(type)	
+	} else {
+		return $CHAR(type)
 	}
-	Quit $$$OK
 ]]></Implementation>
 </Method>
 
-<Method name="PointerSetAt">
-<Description>
-Assigning to array element. Operating with pointers may be unsafe!</Description>
-<FormalSpec>pointer:%String,type:%Integer,index:%Integer,value:%String</FormalSpec>
-<ReturnType>%Status</ReturnType>
+<Method name="GetAligns">
+<Private>1</Private>
+<ReturnType>%String</ReturnType>
 <Implementation><![CDATA[
-	try {
-	  set setAt = $zf(-4, 3, ..CNAId, "pointer_set_at")
-	  set cnaVal = ..ConvertFromCacheToCNA(type, value)
-	  set cnaIndex = ..ConvertFromCacheToCNA(..#SIZET, index)
-	  do $zf(-5, ..CNAId, setAt, pointer, $CHAR(type), cnaIndex, cnaVal)
-	  
-	} catch ex {
-		do ex.Log()
-		return ex.AsStatus()	
+	set os = $SYSTEM.Version.GetOS()
+	set platform = $SYSTEM.Version.GetPlatform()
+	
+	if (((os '= "UNIX") && (os '= "Windows")) || ((platform '= "x86-32") && (platform '= "x86-64"))) {
+		do ..ThrowMessage("Structures are unsupported on your platform")
 	}
-	Quit $$$OK
+	
+	set aligns = ""
+	for i=0:1:(..#NTYPES - 2) {
+		if (((i = ..#DOUBLE) || (i = ..#LONGDOUBLE)) && (os = "UNIX") && (platform = "x86-32")) {
+			set aligns = aligns _ $CHAR(4)
+		} else {
+			set aligns = aligns _ $CHAR($ASCII(..TypeSizes, i + 1))
+		}
+	}
+	return aligns
+]]></Implementation>
+</Method>
+
+<Method name="ConvertStructFromCacheToCNA">
+<FormalSpec>type:%ListOfDataTypes,values:%ListOfDataTypes</FormalSpec>
+<Private>1</Private>
+<ReturnType>%String</ReturnType>
+<Implementation><![CDATA[
+	set aligns = ..GetAligns()
+	set struct = ""
+	set offset = 0
+	set maxAlign = 0
+	for i=1:1:values.Size {
+		set elemType = type.GetAt(i)
+		set elemSize = $ASCII(..TypeSizes, elemType)
+		set elemAlign = $ASCII(aligns, elemType + 1)
+		if (elemAlign > maxAlign) {
+			set maxAlign = elemAlign	
+		}
+		set padding = (elemAlign - (offset # elemAlign)) # elemAlign
+		for j=1:1:padding {
+			set struct = struct _ $CHAR(0)
+		}
+		set offset = offset + padding + elemSize
+		set struct = struct _ ..ConvertFromCacheToCNA(elemType, values.GetAt(i))
+	}
+	set padding = (maxAlign - (offset # maxAlign)) # maxAlign
+	for j=1:1:padding {
+			set struct = struct _ $CHAR(0)
+	}
+	set offset = offset + padding
+	set struct = ..ConvertIntegerFromCacheToCNA(..#SIZET, $ASCII(..TypeSizes, ..#SIZET + 1), offset) _ struct
+		
+	return struct
+]]></Implementation>
+</Method>
+
+<Method name="ConvertStructFromCNAToCache">
+<FormalSpec>type:%String,struct:%String</FormalSpec>
+<Private>1</Private>
+<ReturnType>%ListOfDataTypes</ReturnType>
+<Implementation><![CDATA[
+	set aligns = ..GetAligns()
+	set values = ##class(%ListOfDataTypes).%New()
+	set offset = 0
+	for i=1:1:type.Size {
+		set elemType = type.GetAt(i)
+		set elemSize = $ASCII(..TypeSizes, elemType)
+		set elemAlign = $ASCII(aligns, elemType + 1)
+		
+		set padding = (elemAlign - (offset # elemAlign)) # elemAlign
+		set offset = offset + padding + elemSize
+		do values.Insert(..ConvertFromCNAToCache(elemType, $EXTRACT(struct, offset - elemSize + 1, offset + 1)))
+
+	}	
+	return values
 ]]></Implementation>
 </Method>
 
@@ -223,7 +279,7 @@ Assigning to array element. Operating with pointers may be unsafe!</Description>
 
 <Method name="ConvertIntegerFromCNAToCache">
 <ClassMethod>1</ClassMethod>
-<FormalSpec>type:%Integer,size:%Integer,value:%String</FormalSpec>
+<FormalSpec>type:%String,size:%Integer,value:%String</FormalSpec>
 <Private>1</Private>
 <ReturnType>%Integer</ReturnType>
 <Implementation><![CDATA[
@@ -248,7 +304,7 @@ Assigning to array element. Operating with pointers may be unsafe!</Description>
 </Method>
 
 <Method name="ConvertFromCacheToCNA">
-<FormalSpec>type:%Integer,value:%String</FormalSpec>
+<FormalSpec>type:%String,value:%String</FormalSpec>
 <Private>1</Private>
 <ReturnType>%String</ReturnType>
 <Implementation><![CDATA[
@@ -265,6 +321,8 @@ Assigning to array element. Operating with pointers may be unsafe!</Description>
 		set cnaVal = value
 	}elseif (type = ..#VOID) {
 		do ..ThrowMessage("#VOID may be used only for the type of return value")
+	}elseif ($ISOBJECT(type)) {
+		set cnaVal = ..ConvertStructFromCacheToCNA(type, value)
 	}else {
 		set cnaVal = ..ConvertIntegerFromCacheToCNA(type, size, value)
 	}
@@ -292,6 +350,8 @@ Assigning to array element. Operating with pointers may be unsafe!</Description>
 		set returnValue = value
 	}elseif (type = ..#VOID) {
 		set returnValue = ""
+	}elseif ($ISOBJECT(type)) {
+		set returnValue = ..ConvertStructFromCNAToCache(type, value)
 	}else {
 		set returnValue = ..ConvertIntegerFromCNAToCache(type, size, value)
 	}
@@ -319,13 +379,13 @@ Assigning to array element. Operating with pointers may be unsafe!</Description>
 			set type = argTypes.GetAt(i)
 			
 			set cnaArgs = cnaArgs _ ..ConvertFromCacheToCNA(type, val)
-			set cnaArgTypes = cnaArgTypes _ $CHAR(type)
+			set cnaArgTypes = cnaArgTypes _ ..ConvertTypeFromCacheToCNA(type)
 		}
-		set cnaArgTypes = cnaArgTypes _ $CHAR(returnType)
+		set cnaArgTypes = cnaArgTypes _ ..ConvertTypeFromCacheToCNA(returnType)
 		set cnaRet = $zf(-5, ..CNAId, callFunc, ..LibId, name, cnaArgTypes, cnaArgs)
 				
 		set returnValue =  ..ConvertFromCNAToCache(returnType, cnaRet)
-} catch ex {
+	} catch ex {
 		do ex.Log()
 		return ex.AsStatus()
 	}
@@ -398,6 +458,62 @@ Assigning to array element. Operating with pointers may be unsafe!</Description>
 
 		do $zf(-4, 2, ..CNAId)
 	} catch ex {
+		do ex.Log()
+		return ex.AsStatus()
+	}
+	Quit $$$OK
+]]></Implementation>
+</Method>
+
+<Method name="PointerGetAt">
+<Description>
+Access to array element. Operating with pointers may be unsafe!</Description>
+<FormalSpec>pointer:%String,type:%Integer,index:%Integer,*value:%String</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	try {
+	  set getAt = $zf(-4, 3, ..CNAId, "pointer_get_at")
+	  set cnaIndex = ..ConvertFromCacheToCNA(..#SIZET, index)
+	  set cnaVal = $zf(-5, ..CNAId, getAt, pointer, $CHAR(type), cnaIndex)
+	  
+	  set value = ..ConvertFromCNAToCache(type, cnaVal)
+	} catch ex {
+		do ex.Log()
+		return ex.AsStatus()	
+	}
+	Quit $$$OK
+]]></Implementation>
+</Method>
+
+<Method name="PointerSetAt">
+<Description>
+Assigning to array element. Operating with pointers may be unsafe!</Description>
+<FormalSpec>pointer:%String,type:%Integer,index:%Integer,value:%String</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	try {
+	  set setAt = $zf(-4, 3, ..CNAId, "pointer_set_at")
+	  set cnaVal = ..ConvertFromCacheToCNA(type, value)
+	  set cnaIndex = ..ConvertFromCacheToCNA(..#SIZET, index)
+	  do $zf(-5, ..CNAId, setAt, pointer, $CHAR(type), cnaIndex, cnaVal)
+	  
+	} catch ex {
+		do ex.Log()
+		return ex.AsStatus()	
+	}
+	Quit $$$OK
+]]></Implementation>
+</Method>
+
+<Method name="ConvertStringToPointer">
+<FormalSpec>string:%String,*pointer:%String</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	try {
+		set s2p = $zf(-4, 3, ..CNAId, "string_to_pointer")
+		set pointer = $zf(-5, ..CNAId, s2p, string)
+		do ..AllocatedMemory.Insert(pointer)
+	}catch ex {
 		do ex.Log()
 		return ex.AsStatus()
 	}
