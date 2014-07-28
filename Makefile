@@ -33,15 +33,17 @@ CFLAGS += -I${GLOBALS_HOME}/dev/cpp/include
 
 all: libcna.$(SUFFIX) libsq.$(SUFFIX)
 
-cna.o: cna.c cna.h
+cna.o: cna.c storage.h
 
-libcna.$(SUFFIX): cna.o
-	$(CC) $(LDFLAGS) -o $@ $< $(LIBS)
+storage.o: storage.c storage.h
+
+libcna.$(SUFFIX): cna.o storage.o
+	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
 
 sq.o: sq.c
 
 libsq.$(SUFFIX): sq.o
-	$(CC) $(LDFLAGS) -o $@ $<
+	$(CC) $(LDFLAGS) -o $@ $^
 
 clean:
 	$(RM) *.$(SUFFIX) *.o

@@ -10,7 +10,7 @@
 #include <time.h>
 #include <limits.h>
 
-#include "cna.h"
+#include "storage.h"
 
 #ifdef _WIN32
   #include <windows.h>
@@ -121,12 +121,6 @@ static const size_t ntypes = 17;
 
 /* TODO: replace static global variables by function arguments*/
 
-#define MAXNSTRUCTS 1024
-
-static ffi_type structs[MAXNSTRUCTS];
-
-static size_t nstructs = 0;
-
 inline unsigned char
 get_size(enum TYPE type)
 {
@@ -164,11 +158,11 @@ get_sizes(ZARRAYP retval)
 
 
 ffi_type *
-create_ffi_struct(ZARRAYP args, int *i);
+create_ffi_struct(ZARRAYP args, int *i, storage *mem);
 
 
 ffi_type *
-get_ffi_type(ZARRAYP types, int *i)
+get_ffi_type(ZARRAYP types, int *i, storage *mem)
 {
   //logger("get_ffi_type():\n\ti: %u\ttypes[i]: %u\n", *i, types->data[*i]);
   if (*i >= types->len) {
@@ -191,7 +185,7 @@ get_ffi_type(ZARRAYP types, int *i)
     case CNA_DOUBLE:     return &ffi_type_double;     
     case CNA_LONGDOUBLE: return &ffi_type_longdouble;     
     case CNA_POINTER:    return &ffi_type_pointer;     
-    case CNA_STRUCT:     return create_ffi_struct(types, i);
+    case CNA_STRUCT:     return create_ffi_struct(types, i, mem);
     case CNA_SIZET:
       switch (get_size(CNA_SIZET)) {
         case 1: return &ffi_type_uint8; 
@@ -209,15 +203,10 @@ get_ffi_type(ZARRAYP types, int *i)
 
 
 ffi_type *
-create_ffi_struct(ZARRAYP args, int *i)
+create_ffi_struct(ZARRAYP args, int *i, storage *mem)
 {
 
-  ffi_type *st = structs + nstructs;
-  ++nstructs;
-  if (nstructs == MAXNSTRUCTS) {
-    logger("Number of stored struct types must be less than or equals to %d", MAXNSTRUCTS);
-  }
-    
+  ffi_type *st = alloc(mem, sizeof(ffi_type));
   
   if (*i >= args->len - 1) {
     logger("Invalid index\n");
@@ -231,12 +220,12 @@ create_ffi_struct(ZARRAYP args, int *i)
   st->type = FFI_TYPE_STRUCT;
   st->size = 0;
   st->alignment = 0;
-  st->elements = malloc(sizeof(ffi_type *) * (n + 1));
+  st->elements = alloc(mem, sizeof(ffi_type *) * (n + 1));
 
   ++*i;
 
   for (j = 0; j < n; ++j, ++*i) {
-    st->elements[j] = get_ffi_type(args, i);
+    st->elements[j] = get_ffi_type(args, i, mem);
     //logger("i: %d\tj: %d\t0x%x\n", *i, j, st->elements[j]);
     if (!st->elements[j]) {
       return NULL;
@@ -253,19 +242,6 @@ create_ffi_struct(ZARRAYP args, int *i)
   return st;
 }
 
-void
-destroy_structs(void)
-{
-  // size_t i;
-  // for (i = 0; i < nstructs; ++i) { 
-  //   free(structs[i].elements);
-  // }
-  // free(structs);
-  // structs = NULL;
-  // nstructs = 0;
-  // allocmem = 0;
-}
-
 int
 call_function(ZARRAYP libID, const char *funcname, ZARRAYP argtypes, ZARRAYP args, ZARRAYP retval)
 {
@@ -278,10 +254,13 @@ call_function(ZARRAYP libID, const char *funcname, ZARRAYP argtypes, ZARRAYP arg
 
   int i, j;
   size_t fullsize = 0, size;
-  
+  storage mem;
+  init_storage(&mem);
+
+
   for (i = 0, j = 0; i < maxargs + 1; ++j, ++i) {
     size = get_size(argtypes->data[i]);
-    ffi_types[j] = get_ffi_type(argtypes, &i);
+    ffi_types[j] = get_ffi_type(argtypes, &i, &mem);
     if (!ffi_types[j]) {
       return ZF_FAILURE;
     }
@@ -367,7 +346,7 @@ call_function(ZARRAYP libID, const char *funcname, ZARRAYP argtypes, ZARRAYP arg
 
   /* TODO: handle error */
 
-  destroy_structs();
+  free_storage(&mem);
 
   return ZF_SUCCESS;
 }
