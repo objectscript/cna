@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2014.1.1 (Build 702U)" ts="2014-07-24 14:52:59">
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2014.1.1 (Build 702U)" ts="2014-07-28 13:01:51">
 <Class name="CNA.CNA">
 <Super>%RegisteredObject</Super>
-<TimeChanged>63392,53517.09152</TimeChanged>
+<TimeChanged>63393,61635.561024</TimeChanged>
 <TimeCreated>63383,58144.669569</TimeCreated>
 
 <Property name="LibId">
@@ -16,6 +16,11 @@
 </Property>
 
 <Property name="TypeSizes">
+<Type>%String</Type>
+<Private>1</Private>
+</Property>
+
+<Property name="Alignments">
 <Type>%String</Type>
 <Private>1</Private>
 </Property>
@@ -136,16 +141,12 @@
 ]]></Implementation>
 </Method>
 
-<Method name="GetAligns">
+<Method name="GetAlignments">
 <Private>1</Private>
 <ReturnType>%String</ReturnType>
 <Implementation><![CDATA[
 	set os = $SYSTEM.Version.GetOS()
 	set platform = $SYSTEM.Version.GetPlatform()
-	
-	if (((os '= "UNIX") && (os '= "Windows")) || ((platform '= "x86-32") && (platform '= "x86-64"))) {
-		do ..ThrowMessage("Structures are unsupported on your platform")
-	}
 	
 	set aligns = ""
 	for i=0:1:(..#NTYPES - 2) {
@@ -153,9 +154,60 @@
 			set aligns = aligns _ $CHAR(4)
 		} else {
 			set aligns = aligns _ $CHAR($ASCII(..TypeSizes, i + 1))
-		}
+		} 
 	}
 	return aligns
+]]></Implementation>
+</Method>
+
+<Method name="ApplyAlignment">
+<FormalSpec><![CDATA[&memory:%String,&offset:%Integer,alignment:%Integer]]></FormalSpec>
+<Private>1</Private>
+<Implementation><![CDATA[
+	set padding = (alignment - (offset # alignment)) # alignment
+	if ($data(memory)) {
+		for j=1:1:padding {
+			set memory = memory _ $CHAR(0)
+		}
+	}
+	set offset = offset + padding
+]]></Implementation>
+</Method>
+
+<Method name="GetSizeAndAlignment">
+<FormalSpec>type,*size:%Integer,*alignment:%Integer</FormalSpec>
+<Private>1</Private>
+<Implementation><![CDATA[
+	if ($ISOBJECT(type)) {
+		set alignment = 0
+		set offset = 0
+		for i=1:1:type.Size {
+			do ..GetSizeAndAlignment(type.GetAt(i), .elemSize, .elemAlign)
+			if (elemAlign > alignment) {
+				set alignment = elemAlign	
+			}
+			do ..ApplyAlignment( , .offset, elemAlign)
+			set offset = offset + elemSize
+		}
+		do ..ApplyAlignment( , .offset, alignment)
+		set size = offset
+		
+	} else {
+		set size = $ASCII(..TypeSizes, type + 1)
+		set alignment = $ASCII(..Alignments, type + 1)		
+	}
+]]></Implementation>
+</Method>
+
+<Method name="CheckStructSupport">
+<Private>1</Private>
+<Implementation><![CDATA[
+	set os = $SYSTEM.Version.GetOS()
+	set platform = $SYSTEM.Version.GetPlatform()
+	
+	if (((os '= "UNIX") && (os '= "Windows")) || ((platform '= "x86-32") && (platform '= "x86-64"))) {
+		do ..ThrowMessage("Structures are unsupported on your platform")
+	}
 ]]></Implementation>
 </Method>
 
@@ -164,30 +216,27 @@
 <Private>1</Private>
 <ReturnType>%String</ReturnType>
 <Implementation><![CDATA[
-	set aligns = ..GetAligns()
+	do ..CheckStructSupport()
+	
 	set struct = ""
-	set offset = 0
 	set maxAlign = 0
+	set offset = 0
+	
 	for i=1:1:values.Size {
 		set elemType = type.GetAt(i)
-		set elemSize = $ASCII(..TypeSizes, elemType)
-		set elemAlign = $ASCII(aligns, elemType + 1)
+		do ..GetSizeAndAlignment(elemType, .elemSize, .elemAlign)
+		
 		if (elemAlign > maxAlign) {
 			set maxAlign = elemAlign	
 		}
-		set padding = (elemAlign - (offset # elemAlign)) # elemAlign
-		for j=1:1:padding {
-			set struct = struct _ $CHAR(0)
-		}
-		set offset = offset + padding + elemSize
+		
+		do ..ApplyAlignment(.struct, .offset, elemAlign)
+		
+		set offset = offset + elemSize
 		set struct = struct _ ..ConvertFromCacheToCNA(elemType, values.GetAt(i))
 	}
-	set padding = (maxAlign - (offset # maxAlign)) # maxAlign
-	for j=1:1:padding {
-			set struct = struct _ $CHAR(0)
-	}
-	set offset = offset + padding
-	set struct = ..ConvertIntegerFromCacheToCNA(..#SIZET, $ASCII(..TypeSizes, ..#SIZET + 1), offset) _ struct
+	
+	do ..ApplyAlignment(.struct, .offset, maxAlign)
 		
 	return struct
 ]]></Implementation>
@@ -198,12 +247,12 @@
 <Private>1</Private>
 <ReturnType>%ListOfDataTypes</ReturnType>
 <Implementation><![CDATA[
-	set aligns = ..GetAligns()
+	set aligns = ..GetAlignments()
 	set values = ##class(%ListOfDataTypes).%New()
 	set offset = 0
 	for i=1:1:type.Size {
 		set elemType = type.GetAt(i)
-		set elemSize = $ASCII(..TypeSizes, elemType)
+		set elemSize = $ASCII(..TypeSizes, elemType + 1)
 		set elemAlign = $ASCII(aligns, elemType + 1)
 		
 		set padding = (elemAlign - (offset # elemAlign)) # elemAlign
@@ -378,6 +427,12 @@
 			set val = $GET(args(i))
 			set type = argTypes.GetAt(i)
 			
+			
+			if ($ISOBJECT(type)) {
+				do ..GetSizeAndAlignment(type, .size, .alignment) 
+				set cnaArgs = cnaArgs _ ..ConvertIntegerFromCacheToCNA(..#SIZET, $ASCII(..TypeSizes, ..#SIZET + 1), size)
+			}
+			
 			set cnaArgs = cnaArgs _ ..ConvertFromCacheToCNA(type, val)
 			set cnaArgTypes = cnaArgTypes _ ..ConvertTypeFromCacheToCNA(type)
 		}
@@ -437,6 +492,7 @@
 		set ..CNAId = $zf(-4, 1, CNAPath)
 		set getSizes = $zf(-4, 3, ..CNAId, "get_sizes")
 		set ..TypeSizes = $zf(-5, ..CNAId, getSizes)
+		set ..Alignments = ..GetAlignments()
 	} catch ex {
 		do ex.Log()
 		return ex.AsStatus()

@@ -1,7 +1,7 @@
 CC = gcc
 RM = rm
 
-CFLAGS = -Wall -Wextra -m64 -fpic
+CFLAGS = -Wall -g -Wextra -m64 -fpic
 
 SYS := $(shell gcc -dumpmachine)
 ifneq (, $(findstring linux, $(SYS)))

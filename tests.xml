@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2014.1.1 (Build 702U)" ts="2014-07-24 14:52:59">
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2014.1.1 (Build 702U)" ts="2014-07-28 13:01:51">
 <Class name="CNA.Tests">
 <Super>%UnitTest.TestCase</Super>
-<TimeChanged>63392,45150.25043</TimeChanged>
+<TimeChanged>63396,46908.143155</TimeChanged>
 <TimeCreated>63384,43091.390095</TimeCreated>
 
 <Method name="TestLowLevel">
@@ -335,6 +335,36 @@
 	do $$$AssertEquals(retVal.GetAt(3), 3, "Check return value of create_st()")
 	
 	
+	set nestedType = ##class(%ListOfDataTypes).%New()
+	do nestedType.Insert(cna.#SCHAR)
+	do nestedType.Insert(cna.#INT64)
+	do nestedType.Insert(cna.#SCHAR)
+	
+	do structType.Clear()
+	do structType.Insert(cna.#SCHAR)
+	do structType.Insert(nestedType)
+	do structType.Insert(cna.#SCHAR)
+	
+	do argTypes.Clear()
+	do argTypes.Insert(structType)
+	
+	set nestedVal = ##class(%ListOfDataTypes).%New()
+	do nestedVal.Insert(-14)
+	do nestedVal.Insert(33100)
+	do nestedVal.Insert(28)
+	
+	do structVal.Clear()
+	do structVal.Insert(12)
+	do structVal.Insert(nestedVal)
+	do structVal.Insert(74)
+	
+	
+	
+	set st = cna.CallFunction("sum_nested", cna.#INT64, .retVal, argTypes, structVal)
+	do $$$AssertStatusOK(st, "Call sum_nested() from test library")
+	do $$$AssertEquals(retVal, 33200, "Check return value of sum_nested()")
+	
+		
 	set st = cna.FreeLibrary()
 	do $$$AssertStatusOK(st, "Free test library")
 ]]></Implementation>

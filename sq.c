@@ -101,3 +101,21 @@ create_st(void)
   a.c = 3;
   return a;
 }
+
+struct A {
+  signed char a1;
+  long long a2;
+  signed char a3;
+};
+
+struct B {
+  signed char b1;
+  struct A b2;
+  signed char b3;
+};
+
+EXPORT long long
+sum_nested(struct B x)
+{
+  return x.b1 + x.b2.a1 + x.b2.a2 + x.b2.a3 + x.b3;
+}

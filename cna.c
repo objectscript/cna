@@ -121,11 +121,11 @@ static const size_t ntypes = 17;
 
 /* TODO: replace static global variables by function arguments*/
 
-static ffi_type *structs = NULL;
+#define MAXNSTRUCTS 1024
+
+static ffi_type structs[MAXNSTRUCTS];
 
 static size_t nstructs = 0;
-
-static size_t allocmem = 0;
 
 inline unsigned char
 get_size(enum TYPE type)
@@ -212,19 +212,11 @@ ffi_type *
 create_ffi_struct(ZARRAYP args, int *i)
 {
 
-
-  if (allocmem < nstructs) {
-    logger("Size of allocated memory is smaller than number of stored struct types. Something strange's happened.\n");
-    return NULL;
-  }
-
-  if (allocmem == nstructs) {
-    ++allocmem;
-    structs = realloc(structs, allocmem * sizeof(ffi_type));
-  }
   ffi_type *st = structs + nstructs;
   ++nstructs;
-
+  if (nstructs == MAXNSTRUCTS) {
+    logger("Number of stored struct types must be less than or equals to %d", MAXNSTRUCTS);
+  }
     
   
   if (*i >= args->len - 1) {
@@ -245,7 +237,7 @@ create_ffi_struct(ZARRAYP args, int *i)
 
   for (j = 0; j < n; ++j, ++*i) {
     st->elements[j] = get_ffi_type(args, i);
-    //logger("j: %d\t0x%x\n", j, st->elements[j]);
+    //logger("i: %d\tj: %d\t0x%x\n", *i, j, st->elements[j]);
     if (!st->elements[j]) {
       return NULL;
     }
@@ -264,21 +256,20 @@ create_ffi_struct(ZARRAYP args, int *i)
 void
 destroy_structs(void)
 {
-  size_t i;
-  for (i = 0; i < nstructs; ++i) { 
-    free(structs[i].elements);
-  }
-  free(structs);
-  structs = NULL;
-  nstructs = 0;
-  allocmem = 0;
+  // size_t i;
+  // for (i = 0; i < nstructs; ++i) { 
+  //   free(structs[i].elements);
+  // }
+  // free(structs);
+  // structs = NULL;
+  // nstructs = 0;
+  // allocmem = 0;
 }
 
 int
 call_function(ZARRAYP libID, const char *funcname, ZARRAYP argtypes, ZARRAYP args, ZARRAYP retval)
 {
   logger("call_function():\n");
-
   /* Last value in argtypes and ffi_types is the type of "funcname" return value */ 
   int maxargs = argtypes->len - 1, nargs;
   ffi_cif cif;
@@ -365,7 +356,13 @@ call_function(ZARRAYP libID, const char *funcname, ZARRAYP argtypes, ZARRAYP arg
     return ZF_FAILURE;
   }
 
-  //logger("ffi_size: %u\tffi_align:%u\n", cif.arg_types[0]->size, cif.arg_types[0]->alignment);
+  // logger("ffi_size: %u\tffi_align:%u\n", cif.arg_types[0]->size, cif.arg_types[0]->alignment);
+  // logger("nested\n\tffi_size: %u\tffi_align:%u\n", cif.arg_types[0]->elements[1]->size, cif.arg_types[0]->elements[1]->alignment);
+  // logger("whether struct is the struct\t %d\n", cif.arg_types[0] == &structs[0]);
+  // logger("whether nested struct is the struct\t %d\n", cif.arg_types[0]->elements[1] == &structs[1]);
+  // logger("whether struct is the struct\t %d\n", ffi_types[0] == &structs[0]);
+  // logger("whether nested struct is the struct\t %d\n", ffi_types[0]->elements[1] == &structs[1]);
+  // logger("struct:%x \t struct in ffi_types:%x\n", &structs[0], ffi_types[0]);
   ffi_call(&cif, funcpointer, retval->data, ffi_values);
 
   /* TODO: handle error */
