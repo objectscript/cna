@@ -72,7 +72,7 @@ assign_ZARRAYP_to_pointer(void **p, ZARRAYP a)
 int
 load_library(const char *libname, ZARRAYP retval)
 {
-  logger("load_library():\n");
+  //logger("load_library():\n");
   void *handle = (void *)LOAD_LIBRARY(libname, DEFAULT_LOAD_OPTS);
   if (!handle) {
     logger("LOAD_LIBRARY failed\n");
@@ -85,7 +85,7 @@ load_library(const char *libname, ZARRAYP retval)
 int
 free_library(ZARRAYP libID)
 {
-  logger("free_library():\n");
+  //logger("free_library():\n");
   void *handle;
   if (assign_ZARRAYP_to_pointer(&handle, libID)) {
     return ZF_FAILURE;
@@ -118,8 +118,6 @@ enum TYPE {
 };
 
 static const size_t ntypes = 17;
-
-/* TODO: replace static global variables by function arguments*/
 
 inline unsigned char
 get_size(enum TYPE type)
@@ -243,9 +241,59 @@ create_ffi_struct(ZARRAYP args, int *i, storage *mem)
 }
 
 int
+double_to_float(ZARRAYP val, ZARRAYP retval)
+{
+  if (val->len != sizeof(double)) {
+    logger("Wrong size of input ZARRAYP\n");
+    return ZF_FAILURE;
+  }
+  retval->len = sizeof(float);
+  *((float *)retval->data) = *((double *)val->data);
+  return ZF_SUCCESS;
+}
+
+int
+double_to_long_double(ZARRAYP val, ZARRAYP retval)
+{
+  if (val->len != sizeof(double)) {
+    logger("Wrong size of input ZARRAYP\n");
+    return ZF_FAILURE;
+  }
+  retval->len = sizeof(long double);
+  *((long double *)retval->data) = (long double)*((double *)val->data);
+  //logger("d2ld():\n\tbefore:\t%lf\n\tafter:\t%lf\n", *((double *)val->data), (double) *((long double *)retval->data));
+  return ZF_SUCCESS;
+}
+
+int
+float_to_double(ZARRAYP val, ZARRAYP retval)
+{
+  if (val->len != sizeof(float)) {
+    logger("Wrong size of input ZARRAYP\n");
+    return ZF_FAILURE;
+  }
+  retval->len = sizeof(double);
+  *((double *)retval->data) = *((float *)val->data);
+  return ZF_SUCCESS;
+}
+
+int
+long_double_to_double(ZARRAYP val, ZARRAYP retval)
+{
+  if (val->len != sizeof(long double)) {
+    logger("Wrong size of input ZARRAYP\n");
+    return ZF_FAILURE;
+  }
+  retval->len = sizeof(double);
+  *((double *)retval->data) = *((long double *)val->data);
+  //logger("ld2d():\n\tbefore:\t%lf\n\tafter:\t%lf\n", *((long double *)val->data), (double) *((double *)retval->data));
+  return ZF_SUCCESS;
+}
+
+int
 call_function(ZARRAYP libID, const char *funcname, ZARRAYP argtypes, ZARRAYP args, ZARRAYP retval)
 {
-  logger("call_function():\n");
+  //logger("call_function():\n");
   /* Last value in argtypes and ffi_types is the type of "funcname" return value */ 
   int maxargs = argtypes->len - 1, nargs;
   ffi_cif cif;
@@ -295,9 +343,9 @@ call_function(ZARRAYP libID, const char *funcname, ZARRAYP argtypes, ZARRAYP arg
 
   /* ONLY FOR DEBUGGING */
 
-  // nargs = 0;
+  // nargs = 2;
   // ffi_type st_type;
-  // ffi_type *st_elements[4];
+  // ffi_type *st_elements[4];dd
 
   // st_type.size = 0;
   // st_type.alignment = 0;
@@ -309,8 +357,13 @@ call_function(ZARRAYP libID, const char *funcname, ZARRAYP argtypes, ZARRAYP arg
   // st_elements[2] = &ffi_type_schar;
   // st_elements[3] = NULL;
 
-  // ffi_types[0] = &st_type;
-  // ffi_types[1] = &ffi_type_sint64;
+  // ffi_types[0] = &ffi_type_longdouble;
+  // ffi_types[1] = &ffi_type_longdouble;
+  // ffi_types[2] = &ffi_type_double;
+
+  // long double x = 1.2, y = 0.5;
+  // ffi_values[0] = &x;
+  // ffi_values[1] = &y;
 
   /* */
 
@@ -342,11 +395,16 @@ call_function(ZARRAYP libID, const char *funcname, ZARRAYP argtypes, ZARRAYP arg
   // logger("whether struct is the struct\t %d\n", ffi_types[0] == &structs[0]);
   // logger("whether nested struct is the struct\t %d\n", ffi_types[0]->elements[1] == &structs[1]);
   // logger("struct:%x \t struct in ffi_types:%x\n", &structs[0], ffi_types[0]);
+
+  //logger("before ffi_call()\n");
   ffi_call(&cif, funcpointer, retval->data, ffi_values);
+  //logger("after ffi_call()\n");
 
   /* TODO: handle error */
 
   free_storage(&mem);
+
+  //logger("retval: %lf\n", (double)*((long double *)retval->data));
 
   return ZF_SUCCESS;
 }
@@ -438,9 +496,16 @@ pointer_get_at(ZARRAYP p, ZARRAYP ztype, ZARRAYP index, ZARRAYP value)
 
 ZFBEGIN
 ZFENTRY("get_sizes", "B", get_sizes)
+
+ZFENTRY("double_to_float", "bB", double_to_float)
+ZFENTRY("double_to_long_double", "bB", double_to_long_double)
+ZFENTRY("float_to_double", "bB", float_to_double)
+ZFENTRY("long_double_to_double", "bB", long_double_to_double)
+
 ZFENTRY("call_function", "bcbbB", call_function)
 ZFENTRY("load_library", "cB", load_library)
 ZFENTRY("free_library", "b", free_library)
+
 ZFENTRY("string_to_pointer", "cB", string_to_pointer)
 ZFENTRY("free_pointer", "b", free_pointer)
 ZFENTRY("pointer_set_at", "bbbb", pointer_set_at)

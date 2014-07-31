@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2014.1.1 (Build 702U)" ts="2014-07-28 13:01:51">
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2014.1.1 (Build 702U)" ts="2014-07-28 18:11:31">
 <Class name="CNA.CNA">
 <Super>%RegisteredObject</Super>
-<TimeChanged>63393,61635.561024</TimeChanged>
+<TimeChanged>63396,64596.978785</TimeChanged>
 <TimeCreated>63383,58144.669569</TimeCreated>
 
 <Property name="LibId">
@@ -150,7 +150,7 @@
 	
 	set aligns = ""
 	for i=0:1:(..#NTYPES - 2) {
-		if (((i = ..#DOUBLE) || (i = ..#LONGDOUBLE)) && (os = "UNIX") && (platform = "x86-32")) {
+		if (((i = ..#DOUBLE) || (i = ..#LONGDOUBLE)) && (os = "UNIX") && ($find(platform,"x86-32") '= 0)) {
 			set aligns = aligns _ $CHAR(4)
 		} else {
 			set aligns = aligns _ $CHAR($ASCII(..TypeSizes, i + 1))
@@ -205,7 +205,7 @@
 	set os = $SYSTEM.Version.GetOS()
 	set platform = $SYSTEM.Version.GetPlatform()
 	
-	if (((os '= "UNIX") && (os '= "Windows")) || ((platform '= "x86-32") && (platform '= "x86-64"))) {
+	if (((os '= "UNIX") && (os '= "Windows")) || (($find(platform, "x86-32") '= 0) && ($find(platform, "x86-64") '= 0))) {
 		do ..ThrowMessage("Structures are unsupported on your platform")
 	}
 ]]></Implementation>
@@ -362,8 +362,12 @@
 	}
 	set size = $ASCII(..TypeSizes, type + 1)
 			
-	if ((type = ..#FLOAT) || (type = ..#LONGDOUBLE)) {
-		do ..ThrowMessage("#FLOAT and #LONGDOUBLE is unsupported")	
+	if (type = ..#FLOAT) {
+		set d2f = $zf(-4, 3, ..CNAId, "double_to_float")
+		set cnaVal = $zf(-5, ..CNAId, d2f, $ZDCHAR(value))
+	}elseif (type = ..#LONGDOUBLE) {
+		set d2ld = $zf(-4, 3, ..CNAId, "double_to_long_double")
+		set cnaVal = $zf(-5, ..CNAId, d2ld, $ZDCHAR(value))
 	}elseif (type = ..#DOUBLE) {
 		set cnaVal = $ZDCHAR(value)
 	}elseif (type = ..#POINTER) {
@@ -391,8 +395,12 @@
 			do ..ThrowMessage("Incorrect type")	
 	}
 	set size = $ASCII(..TypeSizes, type + 1)
-	if ((type = ..#FLOAT) || (type = ..#LONGDOUBLE)) {
-		do ..ThrowMessage("Unsupported type of return value")
+	if (type = ..#FLOAT) {
+		set f2d = $zf(-4, 3, ..CNAId, "float_to_double")
+		set returnValue = $ZDASCII($zf(-5, ..CNAId, f2d, value))
+	}elseif (type = ..#LONGDOUBLE) {
+		set ld2d = $zf(-4, 3, ..CNAId, "long_double_to_double")
+		set returnValue = $ZDASCII($zf(-5, ..CNAId, ld2d, value))
 	}elseif (type = ..#DOUBLE) {
 		set returnValue = $ZDASCII(value)
 	}elseif (type = ..#POINTER) {
