@@ -1,12 +1,35 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
+#include <stdarg.h>
+#include <time.h>
 
 #ifdef _WIN32
   #define EXPORT __declspec(dllexport)
 #else /* UNIX */
   #define EXPORT
 #endif /* _WIN32 */
+
+void
+logger(const char *format, ...)
+{
+  va_list args;
+  va_start(args, format);
+  
+  #ifdef _WIN32
+    FILE *fd = fopen("C:\\Users\\dd\\Dropbox\\is\\CNA\\log.txt", "a");
+    time_t now;
+    time(&now);
+    fprintf(fd, "%s\t", ctime(&now));
+    vfprintf(fd, format, args);
+    fclose(fd);
+  #else
+    vprintf(format, args);
+  #endif /* _WIN32 */
+  
+  va_end(args);
+}
 
 EXPORT double 
 square(double a)
@@ -132,4 +155,36 @@ sum_long_double(long double a, long double b)
   char s[100];
   print(s);
   return a + b;
+}
+
+EXPORT int
+compare_string_and_ulysses(const char *s)
+{
+  FILE *fd = fopen("C:\\Users\\dd\\Dropbox\\is\\ulysses.txt", "rb");
+  fseek(fd, 0ll, SEEK_END);
+  size_t size = ftell(fd);
+  rewind(fd);
+  char *buf = malloc(sizeof(char) * size);
+  logger("size: %llu\tstrlen(s): %llu\n", size, strlen(s));
+  
+  if (!buf) { 
+    logger("Can't allocate memory\n");
+    return -1;
+  }
+  size_t res = fread(buf, sizeof(char), size, fd);
+  if (res != size) { 
+    logger("Bytes readed: %llu\n", res);
+    logger("Is EOF: %d\n", feof(fd));
+    logger("Is error: %d\n", ferror(fd));
+    return -1; 
+  }
+
+  int cmp = strncmp(s, buf, size);
+
+  fclose(fd);
+  if (cmp == 0) {
+    return 1;
+  } else {
+    return 0;
+  }
 }

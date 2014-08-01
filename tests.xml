@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2014.1.1 (Build 702U)" ts="2014-07-28 18:11:31">
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2014.1.1 (Build 702U)" ts="2014-08-01 18:57:57">
 <Class name="CNA.Tests">
 <Super>%UnitTest.TestCase</Super>
-<TimeChanged>63396,64512.953354</TimeChanged>
+<TimeChanged>63400,67729.70869</TimeChanged>
 <TimeCreated>63384,43091.390095</TimeCreated>
 
 <Method name="TestLowLevel">
@@ -394,13 +394,51 @@
 	do $$$AssertStatusOK(st, "Call sum_float() from test library")
 	do $$$AssertEquals($zabs(retVal - $double(1.7)) < $double(0.0000001), 1, "Check return value of sum_float()")
 	
-	do argTypes.Clear()
-	do argTypes.Insert(cna.#LONGDOUBLE)
-	do argTypes.Insert(cna.#LONGDOUBLE)
-	set st = cna.CallFunction("sum_long_double", cna.#LONGDOUBLE, .retVal, argTypes, $double(0.2), $double(1.5))
-	do $$$AssertStatusOK(st, "Call sum_long_double() from test library")
-	do $$$AssertEquals(retVal, $double(1.7), "Check return value of sum_long_double()")
+	if ($SYSTEM.Version.GetOS() = "UNIX") {
+		do argTypes.Clear()
+		do argTypes.Insert(cna.#LONGDOUBLE)
+		do argTypes.Insert(cna.#LONGDOUBLE)
+		set st = cna.CallFunction("sum_long_double", cna.#LONGDOUBLE, .retVal, argTypes, $double(0.2), $double(1.5))
+		do $$$AssertStatusOK(st, "Call sum_long_double() from test library")
+		do $$$AssertEquals(retVal, $double(1.7), "Check return value of sum_long_double()")
+	}
+	
+	set st = cna.FreeLibrary()
+	do $$$AssertStatusOK(st, "Free test library")
+]]></Implementation>
+</Method>
+
+<Method name="TestStreams">
+<Implementation><![CDATA[
+	if ($SYSTEM.Version.GetOS() = "UNIX") {
+		set CNAPath = "/home/dd/Dropbox/is/CNA/libcna.so"
+		set testLib = "/home/dd/Dropbox/is/CNA/libsq.so"
+	} else {
+		set CNAPath = "C:\Users\dd\Dropbox\is\CNA\libcna.dll"
+		set testLib = "C:\Users\dd\Dropbox\is\CNA\libsq.dll"			
+	}
+
+	set cna = ##class(CNA.CNA).%New(CNAPath)
+	set st = cna.LoadLibrary(testLib)
+	do $$$AssertStatusOK(st, "Load test library")
+	
+	set file = ##class(%Stream.FileBinary).%New()
+	
+	if ($SYSTEM.Version.GetOS() = "UNIX") {
+		do file.LinkToFile("home/dd/Dropbox/is/ulysses.txt")
+	} else {
+		do file.LinkToFile("C:\Users\dd\Dropbox\is\ulysses.txt")			
+	}
+	
+	set st = cna.ConvertStreamToPointer(file, .pointer)
+	do $$$AssertStatusOK(st, "Convert Ulysses to pointer")
 		
+	set argTypes = ##class(%ListOfDataTypes).%New()
+	do argTypes.Insert(cna.#POINTER)
+	
+	set st = cna.CallFunction("compare_string_and_ulysses", cna.#INT, .retVal, argTypes, pointer)
+	do $$$AssertStatusOK(st, "Call comapring Ulysses and stream")
+	do $$$AssertEquals(retVal, 1, "Check retval")
 	
 	set st = cna.FreeLibrary()
 	do $$$AssertStatusOK(st, "Free test library")

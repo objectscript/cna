@@ -412,7 +412,7 @@ call_function(ZARRAYP libID, const char *funcname, ZARRAYP argtypes, ZARRAYP arg
 int
 string_to_pointer(char *s, ZARRAYP p)
 {
-  char *copy = (char *)malloc(strlen(s) * sizeof(char));
+  char *copy = (char *)malloc((strlen(s) + 1) * sizeof(char));
   strcpy(copy, s);
   assign_pointer_to_ZARRAYP(p, copy);
   return ZF_SUCCESS;
@@ -434,7 +434,7 @@ pointer_set_at(ZARRAYP p, ZARRAYP ztype, ZARRAYP index, ZARRAYP value)
 {
   logger("pointer_set_at():\n\t%u\n", *((unsigned *)value->data));
   void *array;
-  if (ztype->len != sizeof(unsigned char)) {
+  if (p->len != sizeof(void *)) {
     logger("Wrong size of ZARRAY 'pointer'\n");
     return ZF_FAILURE;
   }
@@ -468,7 +468,7 @@ pointer_get_at(ZARRAYP p, ZARRAYP ztype, ZARRAYP index, ZARRAYP value)
 {
   logger("pointer_get_at():\n");
   void *array;
-  if (ztype->len != sizeof(unsigned char)) {
+  if (p->len != sizeof(void *)) {
     logger("Wrong size of ZARRAY 'pointer'\n");
     return ZF_FAILURE;
   }
@@ -494,6 +494,35 @@ pointer_get_at(ZARRAYP p, ZARRAYP ztype, ZARRAYP index, ZARRAYP value)
   return ZF_SUCCESS;
 }
 
+int
+append_to_pointer(ZARRAYP pointer, ZARRAYP n, char *string, ZARRAYP retval)
+{
+  void *mem;
+  if (pointer->len != sizeof(void *)) {
+    logger("Wrong size of ZARRAY 'pointer'\n");
+    return ZF_FAILURE;
+  }
+  assign_ZARRAYP_to_pointer(&mem, pointer);
+  if (n->len != sizeof(size_t)) {
+    logger("Wrong size of ZARRAY 'n'\n");
+    return ZF_FAILURE;
+  }
+  
+  size_t oldsize = *((size_t *)n->data);
+  
+  mem = realloc(mem, oldsize + strlen(string) + 1);
+  if (!mem) {
+    logger("Can't allocate memory for appending to pointer");
+    return ZF_FAILURE;
+  }
+  strcpy(mem + oldsize, string);
+
+  retval->len = sizeof(void *);
+  assign_pointer_to_ZARRAYP(retval, mem);
+  return ZF_SUCCESS;
+}
+
+
 ZFBEGIN
 ZFENTRY("get_sizes", "B", get_sizes)
 
@@ -507,7 +536,9 @@ ZFENTRY("load_library", "cB", load_library)
 ZFENTRY("free_library", "b", free_library)
 
 ZFENTRY("string_to_pointer", "cB", string_to_pointer)
+ZFENTRY("append_to_pointer", "bbcB", append_to_pointer)
 ZFENTRY("free_pointer", "b", free_pointer)
 ZFENTRY("pointer_set_at", "bbbb", pointer_set_at)
 ZFENTRY("pointer_get_at", "bbbB", pointer_get_at)
+
 ZFEND

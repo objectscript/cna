@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2014.1.1 (Build 702U)" ts="2014-07-28 18:11:31">
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2014.1.1 (Build 702U)" ts="2014-08-01 18:57:57">
 <Class name="CNA.CNA">
 <Super>%RegisteredObject</Super>
-<TimeChanged>63396,64596.978785</TimeChanged>
+<TimeChanged>63400,68262.25589</TimeChanged>
 <TimeCreated>63383,58144.669569</TimeCreated>
 
 <Property name="LibId">
@@ -576,6 +576,34 @@ Assigning to array element. Operating with pointers may be unsafe!</Description>
 	try {
 		set s2p = $zf(-4, 3, ..CNAId, "string_to_pointer")
 		set pointer = $zf(-5, ..CNAId, s2p, string)
+		do ..AllocatedMemory.Insert(pointer)
+	}catch ex {
+		do ex.Log()
+		return ex.AsStatus()
+	}
+	Quit $$$OK
+]]></Implementation>
+</Method>
+
+<Method name="ConvertStreamToPointer">
+<FormalSpec>stream:%Stream.Object,*pointer:%String</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	try {
+		set a2p = $zf(-4, 3, ..CNAId, "append_to_pointer")
+		set len = 0
+		set fullLen = 0
+		set pointer = ..ConvertFromCacheToCNA(..#SIZET, 0)
+		while (len '= -1) {
+			set len = 32768
+			set string = stream.Read(.len, .st)
+			if ($$$ISERR(st)) {
+				do ..AllocatedMemory.Insert(pointer)
+				return st
+			}
+			set pointer = $zf(-5, ..CNAId, a2p, pointer, ..ConvertFromCacheToCNA(..#SIZET, fullLen), string)			
+			set fullLen = fullLen + len
+		}
 		do ..AllocatedMemory.Insert(pointer)
 	}catch ex {
 		do ex.Log()
