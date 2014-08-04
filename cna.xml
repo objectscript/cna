@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2014.1.1 (Build 702U)" ts="2014-08-04 11:47:25">
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2014.1.1 (Build 702U)" ts="2014-08-04 12:58:04">
 <Class name="CNA.CNA">
 <Super>%RegisteredObject</Super>
-<TimeChanged>63403,42420.713354</TimeChanged>
+<TimeChanged>63403,46642.944782</TimeChanged>
 <TimeCreated>63383,58144.669569</TimeCreated>
 
 <Property name="LibId">
@@ -31,74 +31,113 @@
 </Property>
 
 <Parameter name="VOID">
+<Description>
+C void type. May be used only for the type of return value.</Description>
 <Default>0</Default>
 </Parameter>
 
 <Parameter name="UCHAR">
+<Description>
+Unsigned char.</Description>
 <Default>1</Default>
 </Parameter>
 
 <Parameter name="SCHAR">
+<Description>
+Signed char.</Description>
 <Default>2</Default>
 </Parameter>
 
 <Parameter name="UINT">
+<Description>
+Unsigned int.</Description>
 <Default>3</Default>
 </Parameter>
 
 <Parameter name="INT">
+<Description>
+Signed char.</Description>
 <Default>4</Default>
 </Parameter>
 
 <Parameter name="USHORT">
+<Description>
+Unsigned short.</Description>
 <Default>5</Default>
 </Parameter>
 
 <Parameter name="SHORT">
+<Description>
+Signed short.</Description>
 <Default>6</Default>
 </Parameter>
 
 <Parameter name="ULONG">
+<Description>
+Unsigned long int.</Description>
 <Default>7</Default>
 </Parameter>
 
 <Parameter name="LONG">
+<Description>
+Signed long int.</Description>
 <Default>8</Default>
 </Parameter>
 
 <Parameter name="UINT64">
+<Description><![CDATA[
+Unsigned 64-bit int (Usually equal to C type unsigned long long int).
+<p> Works wrong with values larger than maximum of signed 64-bit integers because of Cache <class>%Integer</class> class limitations. ]]></Description>
 <Default>9</Default>
 </Parameter>
 
 <Parameter name="INT64">
+<Description>
+Signed 64-bit int (Usually equals to C type long long int).</Description>
 <Default>10</Default>
 </Parameter>
 
 <Parameter name="FLOAT">
+<Description><![CDATA[
+Single precision floating point type.
+<p>Value of this types must be passed to functions as <class>%Double</class>.  ]]></Description>
 <Default>11</Default>
 </Parameter>
 
 <Parameter name="DOUBLE">
+<Description><![CDATA[
+Double precision floating point type.
+<p>Value of this types must be passed to functions as <class>%Double</class>.  ]]></Description>
 <Default>12</Default>
 </Parameter>
 
 <Parameter name="LONGDOUBLE">
+<Description>
+Type equal to C long double. It's supported not for all platforms.</Description>
 <Default>13</Default>
 </Parameter>
 
 <Parameter name="POINTER">
+<Description>
+Pointer type.</Description>
 <Default>14</Default>
 </Parameter>
 
 <Parameter name="SIZET">
+<Description>
+Type equal to C size_t. Usually it is an unsigned 32 or 64-bit integer.</Description>
 <Default>15</Default>
 </Parameter>
 
 <Parameter name="STRUCT">
+<Description>
+Structure type.</Description>
 <Default>16</Default>
 </Parameter>
 
 <Parameter name="NTYPES">
+<Description>
+Number of all available in CNA types.</Description>
 <Default>17</Default>
 </Parameter>
 
@@ -417,6 +456,17 @@
 </Method>
 
 <Method name="CallFunction">
+<Description><![CDATA[
+Calls function <var>name</var> from previously loaded dynamic library.
+
+<p> You need to specify types of this function return value and types of all arguments.
+Types may be represented as one of <class>CNA.CNA</class> parameters if it is a plain C datatype or as <class>%ListOfDataTypes</class> of parameters if it is a structure.
+You need to put all argument types in one collection <class>%ListOfDataTypes</class> and pass it to argument <var>argTypes</var>.
+If there is no arguments you need to pass an empty collection.
+
+<p> Argument values is passed the same way as a simple function arguments after first four of it.
+
+<p>See examples in <class>CNA.Tests</class>.]]></Description>
 <FormalSpec>name:%String,returnType,*returnValue,argTypes:%ListOfDataTypes,args...:%List</FormalSpec>
 <ReturnType>%Status</ReturnType>
 <Implementation><![CDATA[
@@ -457,6 +507,8 @@
 </Method>
 
 <Method name="LoadLibrary">
+<Description><![CDATA[
+Loads dynamic library with path <var>path</var> to CNA.]]></Description>
 <FormalSpec>path:%String</FormalSpec>
 <ReturnType>%Status</ReturnType>
 <Implementation><![CDATA[
@@ -472,6 +524,8 @@
 </Method>
 
 <Method name="FreeLibrary">
+<Description>
+Releases loaded dynamic library from CNA.</Description>
 <ReturnType>%Status</ReturnType>
 <Implementation><![CDATA[
 	try {
@@ -530,8 +584,14 @@
 </Method>
 
 <Method name="PointerGetAt">
-<Description>
-Access to array element. Operating with pointers may be unsafe!</Description>
+<Description><![CDATA[
+Provides access to array element with index <var>index</var>. 
+
+<p> <var>pointer</var> must be a C array created by <method>ConvertStreamToPointer</method>, <method>ConvertStringToPointer</method> or by C functions.
+
+<p> <var>type</var> is passed with the same rules as in <method>CallFunction</method>.
+
+<p> Operating with pointers may be unsafe!]]></Description>
 <FormalSpec>pointer:%String,type,index:%Integer,*value</FormalSpec>
 <ReturnType>%Status</ReturnType>
 <Implementation><![CDATA[
@@ -550,8 +610,14 @@ Access to array element. Operating with pointers may be unsafe!</Description>
 </Method>
 
 <Method name="PointerSetAt">
-<Description>
-Assigning to array element. Operating with pointers may be unsafe!</Description>
+<Description><![CDATA[
+Assigns <var>value</var> to array element with index <var>index</var>. 
+
+<p> <var>pointer</var> must be a C array created by <method>ConvertStreamToPointer</method>, <method>ConvertStringToPointer</method> or by C functions.
+
+<p> <var>type</var> is passed with the same rules as in <method>CallFunction</method>.
+
+<p> Operating with pointers may be unsafe!]]></Description>
 <FormalSpec>pointer:%String,type,index:%Integer,value</FormalSpec>
 <ReturnType>%Status</ReturnType>
 <Implementation><![CDATA[
@@ -570,6 +636,8 @@ Assigning to array element. Operating with pointers may be unsafe!</Description>
 </Method>
 
 <Method name="ConvertStringToPointer">
+<Description><![CDATA[
+Converts Cache string to C array and returns a <var>pointer</var> to the beginning of this array.]]></Description>
 <FormalSpec>string:%String,*pointer:%String</FormalSpec>
 <ReturnType>%Status</ReturnType>
 <Implementation><![CDATA[
@@ -586,6 +654,8 @@ Assigning to array element. Operating with pointers may be unsafe!</Description>
 </Method>
 
 <Method name="ConvertStreamToPointer">
+<Description><![CDATA[
+Converts Cache stream to C array and returns a <var>pointer</var> to the beginning of this array.]]></Description>
 <FormalSpec>stream:%Stream.Object,*pointer:%String</FormalSpec>
 <ReturnType>%Status</ReturnType>
 <Implementation><![CDATA[
