@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2014.1.1 (Build 702U)" ts="2014-08-04 17:00:44">
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2014.1.1 (Build 702U)" ts="2014-08-04 17:24:34">
 <Class name="CNA.Tests">
 <Super>%UnitTest.TestCase</Super>
-<TimeChanged>63403,61212.469052</TimeChanged>
+<TimeChanged>63403,62659.304816</TimeChanged>
 <TimeCreated>63384,43091.390095</TimeCreated>
 
 <Property name="CNAPath">
@@ -17,11 +17,23 @@
 <Type>%String</Type>
 </Property>
 
+<Property name="HunspellAff">
+<Type>%String</Type>
+</Property>
+
+<Property name="HunspellDic">
+<Type>%String</Type>
+</Property>
+
+<Property name="Ulysses">
+<Type>%String</Type>
+</Property>
+
 <Method name="TestLowLevel">
 <Implementation><![CDATA[
 	try {
 		do $$$AssertEquals(##class(%File).Exists(..CNAPath), 1, "CNA file exists")
-		do $$$AssertEquals(##class(%File).Exists(..testLib), 1, "testLib file exists")
+		do $$$AssertEquals(##class(%File).Exists(..testLib), 1, "Testlib file exists")
 	
 		do $zf(-3, ..CNAPath)
 		
@@ -129,9 +141,9 @@
 	set st = cna.LoadLibrary(..Hunspell)
 	do $$$AssertStatusOK(st, "Load Hunspell")
 	
-	set st =  cna.ConvertStringToPointer("C:\Users\dd\Dropbox\is\hunspell\ru_RU.aff", .aff)
+	set st =  cna.ConvertStringToPointer(..HunspellAff, .aff)
 	do $$$AssertStatusOK(st, "Create C-string")
-	set st =  cna.ConvertStringToPointer("C:\Users\dd\Dropbox\is\hunspell\ru_RU.dic", .dic)
+	set st =  cna.ConvertStringToPointer(..HunspellDic, .dic)
 	do $$$AssertStatusOK(st, "Create C-string")
 	
 	set argTypes = ##class(%ListOfDataTypes).%New()
@@ -378,11 +390,7 @@
 	
 	set file = ##class(%Stream.FileBinary).%New()
 	
-	if ($SYSTEM.Version.GetOS() = "UNIX") {
-		do file.LinkToFile("home/dd/Dropbox/is/ulysses.txt")
-	} else {
-		do file.LinkToFile("C:\Users\dd\Dropbox\is\ulysses.txt")			
-	}
+	do file.LinkToFile(..Ulysses)
 	
 	set st = cna.ConvertStreamToPointer(file, .pointer)
 	do $$$AssertStatusOK(st, "Convert Ulysses to pointer")
@@ -391,7 +399,7 @@
 	do argTypes.Insert(cna.#POINTER)
 	
 	set st = cna.CallFunction("compare_string_and_ulysses", cna.#INT, .retVal, argTypes, pointer)
-	do $$$AssertStatusOK(st, "Call comapring Ulysses and stream")
+	do $$$AssertStatusOK(st, "Call comparing Ulysses and stream")
 	do $$$AssertEquals(retVal, 1, "Check retval")
 	
 	set st = cna.FreeLibrary()
@@ -429,7 +437,12 @@ Method OnAfterAllTests() As %Status
 	}
 	set ..CNAPath = ^UnitTestRoot _ "libcna" _ suffix
 	set ..testLib = ^UnitTestRoot _ "tests" _ delim _ "libtest" _ suffix
-	set ..Hunspell = ^UnitTestRoot _ ".." _ delim _ "hunspell" _ delim _ "libhunspell" _ suffix
+	set hunspellDir = ^UnitTestRoot _ ".." _ delim _ "hunspell" _ delim 
+	set ..Hunspell = hunspellDir _ "libhunspell" _ suffix
+	set ..HunspellAff = hunspellDir _ "ru_RU.aff"
+	set ..HunspellDic = hunspellDir _ "ru_RU.dic"
+	
+	set ..Ulysses = ^UnitTestRoot _ ".." _ delim _ "ulysses.txt"
  	Quit $$$OK
 ]]></Implementation>
 </Method>
