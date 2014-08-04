@@ -1,59 +1,63 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2014.1.1 (Build 702U)" ts="2014-08-04 15:17:34">
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2014.1.1 (Build 702U)" ts="2014-08-04 17:00:44">
 <Class name="CNA.Tests">
 <Super>%UnitTest.TestCase</Super>
-<TimeChanged>63400,67729.70869</TimeChanged>
+<TimeChanged>63403,61212.469052</TimeChanged>
 <TimeCreated>63384,43091.390095</TimeCreated>
+
+<Property name="CNAPath">
+<Type>%String</Type>
+</Property>
+
+<Property name="testLib">
+<Type>%String</Type>
+</Property>
+
+<Property name="Hunspell">
+<Type>%String</Type>
+</Property>
 
 <Method name="TestLowLevel">
 <Implementation><![CDATA[
 	try {
-		if ($SYSTEM.Version.GetOS() = "UNIX") {
-			set CNAPath = "/home/dd/Dropbox/is/CNA/libcna.so"
-			set testLib = "/home/dd/Dropbox/is/CNA/libsq.so"
-		} else {
-			set CNAPath = "C:\Users\dd\Dropbox\is\CNA\libcna.dll"
-			set testLib = "C:\Users\dd\Dropbox\is\CNA\libsq.dll"			
-		}
-
-		do $$$AssertEquals(##class(%File).Exists(CNAPath), 1, "CNA file exists")
-		do $$$AssertEquals(##class(%File).Exists(testLib), 1, "SQlib file exists")
+		do $$$AssertEquals(##class(%File).Exists(..CNAPath), 1, "CNA file exists")
+		do $$$AssertEquals(##class(%File).Exists(..testLib), 1, "testLib file exists")
 	
-		do $zf(-3, CNAPath)
+		do $zf(-3, ..CNAPath)
 		
-		set libID = $zf(-3, "", "load_library", testLib)
+		set libID = $zf(-3, "", "load_library", ..testLib)
 		
 		set func = "sum"
 		set argTypes = $CHAR(3, 3, 3, 3, 3, 3)
 		set args = $ZLCHAR(12, 10, 35, 321, 21)
 		set retVal = $zf(-3, "", "call_function", libID, func, argTypes, args)
 		set retVal = $ZLASCII(retVal)
-		do $$$AssertEquals(retVal, 399, "Check sum() from libsq: 12 + 10 + 35 + 321 + 21 = 399")
+		do $$$AssertEquals(retVal, 399, "Check sum() from test library: 12 + 10 + 35 + 321 + 21 = 399")
 		
 		set func = "mul"
 		set argTypes = $CHAR(9, 12, 12)
 		set args = $ZQCHAR(10) _ $ZDCHAR($DOUBLE(1.5))
 		set retVal = $zf(-3, "", "call_function", libID, func, argTypes, args)
 		set retVal = $ZDASCII(retVal)
-		do $$$AssertEquals(retVal, $double(15), "Check mul() from libsq: 10 * 1.5 = 15")
+		do $$$AssertEquals(retVal, $double(15), "Check mul() from test library: 10 * 1.5 = 15")
 
 		set func = "x"
 		set argTypes = $CHAR(9, 9)
 		set args = $ZQCHAR(-2384929929829)
 		set retVal = $zf(-3, "", "call_function", libID, func, argTypes, args)
 		set retVal =  $ZQASCII(retVal)
-		do $$$AssertEquals(retVal, -2384929929829, "Check x() from libsq:" _ retVal _ " = -2384929929829")
+		do $$$AssertEquals(retVal, -2384929929829, "Check x() from test library:" _ retVal _ " = -2384929929829")
 		
 		set func = "square"
 		set argTypes = $CHAR(12, 12)
 		set args = $ZDCHAR($DOUBLE(1.2))
 		set retVal = $zf(-3, "", "call_function", libID, func, argTypes, args)
 		set retVal = $ZDASCII(retVal)
-		do $$$AssertEquals(retVal, $double(1.44), "Check square() from libsq: 1.2 ^ 2 = 1.44")
+		do $$$AssertEquals(retVal, $double(1.44), "Check square() from test library: 1.2 ^ 2 = 1.44")
 		
 		do $zf(-3, "", "free_library", libID)
 		
-		} catch ex {
+		}catch ex {
 	
 			write $system.Status.GetErrorText(ex.AsStatus(),"ru"),!
 			do $zf(-3, "")
@@ -64,19 +68,11 @@
 
 <Method name="TestAPI">
 <Implementation><![CDATA[
-	if ($SYSTEM.Version.GetOS() = "UNIX") {
-		set CNAPath = "/home/dd/Dropbox/is/CNA/libcna.so"
-		set testLib = "/home/dd/Dropbox/is/CNA/libsq.so"
-	} else {
-		set CNAPath = "C:\Users\dd\Dropbox\is\CNA\libcna.dll"
-		set testLib = "C:\Users\dd\Dropbox\is\CNA\libsq.dll"			
-	}
 
-	
-	do $$$AssertEquals(##class(%File).Exists(testLib), 1, "SQlib file exists")
+	do $$$AssertEquals(##class(%File).Exists(..testLib), 1, "testLib file exists")
 
-	set cna = ##class(CNA.CNA).%New(CNAPath)
-	set st = cna.LoadLibrary(testLib)
+	set cna = ##class(CNA.CNA).%New(..CNAPath)
+	set st = cna.LoadLibrary(..testLib)
 	do $$$AssertStatusOK(st, "Load test library")
 	
 	set argTypes = ##class(%ListOfDataTypes).%New()
@@ -126,15 +122,11 @@
 	if ($SYSTEM.Version.GetOS() = "UNIX") {
 		//Not implemented yet
 		return $$$OK
-	} else {
-		set CNAPath = "C:\Users\dd\Dropbox\is\CNA\libcna.dll"
-		set testLib = "C:\Users\dd\Dropbox\is\hunspell\libhunspell.dll"
-	}
-
+	} 
 	
 	
-	set cna = ##class(CNA.CNA).%New(CNAPath)
-	set st = cna.LoadLibrary(testLib)
+	set cna = ##class(CNA.CNA).%New(..CNAPath)
+	set st = cna.LoadLibrary(..Hunspell)
 	do $$$AssertStatusOK(st, "Load Hunspell")
 	
 	set st =  cna.ConvertStringToPointer("C:\Users\dd\Dropbox\is\hunspell\ru_RU.aff", .aff)
@@ -169,17 +161,10 @@
 
 <Method name="TestPointers">
 <Implementation><![CDATA[
-	if ($SYSTEM.Version.GetOS() = "UNIX") {
-		set CNAPath = "/home/dd/Dropbox/is/CNA/libcna.so"
-		set testLib = "/home/dd/Dropbox/is/CNA/libsq.so"
-	} else {
-		set CNAPath = "C:\Users\dd\Dropbox\is\CNA\libcna.dll"
-		set testLib = "C:\Users\dd\Dropbox\is\CNA\libsq.dll"			
-	}
 
-	set cna = ##class(CNA.CNA).%New(CNAPath)
-	set st = cna.LoadLibrary(testLib)
-	do $$$AssertStatusOK(st, "Load sqlib")
+	set cna = ##class(CNA.CNA).%New(..CNAPath)
+	set st = cna.LoadLibrary(..testLib)
+	do $$$AssertStatusOK(st, "Load testLib")
 	
 	set argTypes = ##class(%ListOfDataTypes).%New()
 	do argTypes.Insert(cna.#SIZET)
@@ -214,18 +199,11 @@
 
 <Method name="TestIntegers">
 <Implementation><![CDATA[
-	if ($SYSTEM.Version.GetOS() = "UNIX") {
-		set CNAPath = "/home/dd/Dropbox/is/CNA/libcna.so"
-		set testLib = "/home/dd/Dropbox/is/CNA/libsq.so"
-	} else {
-		set CNAPath = "C:\Users\dd\Dropbox\is\CNA\libcna.dll"
-		set testLib = "C:\Users\dd\Dropbox\is\CNA\libsq.dll"			
-	}
 
 	
-	set cna = ##class(CNA.CNA).%New(CNAPath)
-	set st = cna.LoadLibrary(testLib)
-	do $$$AssertStatusOK(st, "Load sqlib")
+	set cna = ##class(CNA.CNA).%New(..CNAPath)
+	set st = cna.LoadLibrary(..testLib)
+	do $$$AssertStatusOK(st, "Load ..testLib")
 
 	set argTypes = ##class(%ListOfDataTypes).%New()
 	
@@ -299,17 +277,9 @@
 
 <Method name="TestStructures">
 <Implementation><![CDATA[
-	if ($SYSTEM.Version.GetOS() = "UNIX") {
-		set CNAPath = "/home/dd/Dropbox/is/CNA/libcna.so"
-		set testLib = "/home/dd/Dropbox/is/CNA/libsq.so"
-	} else {
-		set CNAPath = "C:\Users\dd\Dropbox\is\CNA\libcna.dll"
-		set testLib = "C:\Users\dd\Dropbox\is\CNA\libsq.dll"			
-	}
 
-
-	set cna = ##class(CNA.CNA).%New(CNAPath)
-	set st = cna.LoadLibrary(testLib)
+	set cna = ##class(CNA.CNA).%New(..CNAPath)
+	set st = cna.LoadLibrary(..testLib)
 	do $$$AssertStatusOK(st, "Load test library")
 	
 	set argTypes = ##class(%ListOfDataTypes).%New()
@@ -374,17 +344,8 @@
 
 <Method name="TestFloatingPoint">
 <Implementation><![CDATA[
-	if ($SYSTEM.Version.GetOS() = "UNIX") {
-		set CNAPath = "/home/dd/Dropbox/is/CNA/libcna.so"
-		set testLib = "/home/dd/Dropbox/is/CNA/libsq.so"
-	} else {
-		set CNAPath = "C:\Users\dd\Dropbox\is\CNA\libcna.dll"
-		set testLib = "C:\Users\dd\Dropbox\is\CNA\libsq.dll"			
-	}
-
-
-	set cna = ##class(CNA.CNA).%New(CNAPath)
-	set st = cna.LoadLibrary(testLib)
+	set cna = ##class(CNA.CNA).%New(..CNAPath)
+	set st = cna.LoadLibrary(..testLib)
 	do $$$AssertStatusOK(st, "Load test library")
 	
 	set argTypes = ##class(%ListOfDataTypes).%New()
@@ -410,16 +371,9 @@
 
 <Method name="TestStreams">
 <Implementation><![CDATA[
-	if ($SYSTEM.Version.GetOS() = "UNIX") {
-		set CNAPath = "/home/dd/Dropbox/is/CNA/libcna.so"
-		set testLib = "/home/dd/Dropbox/is/CNA/libsq.so"
-	} else {
-		set CNAPath = "C:\Users\dd\Dropbox\is\CNA\libcna.dll"
-		set testLib = "C:\Users\dd\Dropbox\is\CNA\libsq.dll"			
-	}
 
-	set cna = ##class(CNA.CNA).%New(CNAPath)
-	set st = cna.LoadLibrary(testLib)
+	set cna = ##class(CNA.CNA).%New(..CNAPath)
+	set st = cna.LoadLibrary(..testLib)
 	do $$$AssertStatusOK(st, "Load test library")
 	
 	set file = ##class(%Stream.FileBinary).%New()
@@ -442,6 +396,41 @@
 	
 	set st = cna.FreeLibrary()
 	do $$$AssertStatusOK(st, "Free test library")
+]]></Implementation>
+</Method>
+
+<Method name="OnBeforeAllTests">
+<Description><![CDATA[
+Run by <B>RunTest</B> once <a href="#OnBeforeAll">before any test methods</a> in the test class are run. Can be used to set up a 
+test environment that will be later cleaned up by <B>OnAfterAllTests</B>. 
+<br><br>Example: Setup and Cleanup of an environment: 
+<pre>
+Method OnBeforeAllTests() As %Status
+{
+	//do setup stuff here
+ 	set ^inputMessage = "input message"
+	quit $$$OK
+}
+Method OnAfterAllTests() As %Status
+{
+	//do clean up stuff here
+	kill ^inputMessage
+	quit $$$OK
+}</pre>
+]]></Description>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	if ($SYSTEM.Version.GetOS() = "UNIX") {
+		set delim = "/"
+		set suffix = ".so"
+	} else {
+		set delim = "\"
+		set suffix = ".dll"
+	}
+	set ..CNAPath = ^UnitTestRoot _ "libcna" _ suffix
+	set ..testLib = ^UnitTestRoot _ "tests" _ delim _ "libtest" _ suffix
+	set ..Hunspell = ^UnitTestRoot _ ".." _ delim _ "hunspell" _ delim _ "libhunspell" _ suffix
+ 	Quit $$$OK
 ]]></Implementation>
 </Method>
 </Class>

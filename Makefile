@@ -30,8 +30,10 @@ endif
 
 CFLAGS += -I${GLOBALS_HOME}/dev/cpp/include
 
+TESTSDIR = tests
 
-all: libcna.$(SUFFIX) libsq.$(SUFFIX)
+
+all: libcna.$(SUFFIX) $(TESTSDIR)/libtest.$(SUFFIX)
 
 cna.o: cna.c storage.h
 
@@ -40,10 +42,10 @@ storage.o: storage.c storage.h
 libcna.$(SUFFIX): cna.o storage.o
 	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
 
-sq.o: sq.c
+$(TESTSDIR)/teslib.o: $(TESTSDIR)/testlib.c
 
-libsq.$(SUFFIX): sq.o
+$(TESTSDIR)/libtest.$(SUFFIX): $(TESTSDIR)/testlib.o
 	$(CC) $(LDFLAGS) -o $@ $^
 
 clean:
-	$(RM) *.$(SUFFIX) *.o
+	$(RM) *.$(SUFFIX) *.o $(TESTSDIR)/*.$(SUFFIX) $(TESTSDIR)/*.o
