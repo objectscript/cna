@@ -72,7 +72,6 @@ assign_ZARRAYP_to_pointer(void **p, ZARRAYP a)
 int
 load_library(const char *libname, ZARRAYP retval)
 {
-  //logger("load_library():\n");
   void *handle = (void *)LOAD_LIBRARY(libname, DEFAULT_LOAD_OPTS);
   if (!handle) {
     logger("LOAD_LIBRARY failed\n");
@@ -85,7 +84,6 @@ load_library(const char *libname, ZARRAYP retval)
 int
 free_library(ZARRAYP libID)
 {
-  //logger("free_library():\n");
   void *handle;
   if (assign_ZARRAYP_to_pointer(&handle, libID)) {
     return ZF_FAILURE;
@@ -162,7 +160,6 @@ create_ffi_struct(ZARRAYP args, int *i, storage *mem);
 ffi_type *
 get_ffi_type(ZARRAYP types, int *i, storage *mem)
 {
-  //logger("get_ffi_type():\n\ti: %u\ttypes[i]: %u\n", *i, types->data[*i]);
   if (*i >= types->len) {
     logger("Invalid index in get_ffi_type()\n");
     return NULL;
@@ -224,7 +221,6 @@ create_ffi_struct(ZARRAYP args, int *i, storage *mem)
 
   for (j = 0; j < n; ++j, ++*i) {
     st->elements[j] = get_ffi_type(args, i, mem);
-    //logger("i: %d\tj: %d\t0x%x\n", *i, j, st->elements[j]);
     if (!st->elements[j]) {
       return NULL;
     }
@@ -261,7 +257,6 @@ double_to_long_double(ZARRAYP val, ZARRAYP retval)
   }
   retval->len = sizeof(long double);
   *((long double *)retval->data) = (long double)*((double *)val->data);
-  //logger("d2ld():\n\tbefore:\t%lf\n\tafter:\t%lf\n", *((double *)val->data), (double) *((long double *)retval->data));
   return ZF_SUCCESS;
 }
 
@@ -286,14 +281,12 @@ long_double_to_double(ZARRAYP val, ZARRAYP retval)
   }
   retval->len = sizeof(double);
   *((double *)retval->data) = *((long double *)val->data);
-  //logger("ld2d():\n\tbefore:\t%lf\n\tafter:\t%lf\n", *((long double *)val->data), (double) *((double *)retval->data));
   return ZF_SUCCESS;
 }
 
 int
 call_function(ZARRAYP libID, const char *funcname, ZARRAYP argtypes, ZARRAYP args, ZARRAYP retval)
 {
-  //logger("call_function():\n");
   /* Last value in argtypes and ffi_types is the type of "funcname" return value */ 
   int maxargs = argtypes->len - 1, nargs;
   ffi_cif cif;
@@ -318,14 +311,12 @@ call_function(ZARRAYP libID, const char *funcname, ZARRAYP argtypes, ZARRAYP arg
     }
     if (size == 0 && ffi_types[j] != &ffi_type_void && i != maxargs) {
       size = *((size_t *)(args->data + fullsize));
-      //logger("size of structure: %u\n", size);
       fullsize += sizeof(size_t);
     }
     if (i != maxargs) {
       ffi_values[j] = args->data + fullsize;
     }
     fullsize += size;
-    //logger("i: %d\tj: %d\tsize: %d\t\n", i, j, size);
   }
 
   retval->len = size;
@@ -341,32 +332,6 @@ call_function(ZARRAYP libID, const char *funcname, ZARRAYP argtypes, ZARRAYP arg
     return ZF_FAILURE;
   }
 
-  /* ONLY FOR DEBUGGING */
-
-  // nargs = 2;
-  // ffi_type st_type;
-  // ffi_type *st_elements[4];dd
-
-  // st_type.size = 0;
-  // st_type.alignment = 0;
-  // st_type.type = FFI_TYPE_STRUCT;
-  // st_type.elements = st_elements;
-  
-  // st_elements[0] = &ffi_type_schar;
-  // st_elements[1] = &ffi_type_sint64;
-  // st_elements[2] = &ffi_type_schar;
-  // st_elements[3] = NULL;
-
-  // ffi_types[0] = &ffi_type_longdouble;
-  // ffi_types[1] = &ffi_type_longdouble;
-  // ffi_types[2] = &ffi_type_double;
-
-  // long double x = 1.2, y = 0.5;
-  // ffi_values[0] = &x;
-  // ffi_values[1] = &y;
-
-  /* */
-
   if (ffi_prep_cif(&cif, FFI_DEFAULT_ABI, nargs, ffi_types[nargs], ffi_types) != FFI_OK) {
     logger("ffi_prep_cif() failed\n");
     return ZF_FAILURE;
@@ -374,11 +339,6 @@ call_function(ZARRAYP libID, const char *funcname, ZARRAYP argtypes, ZARRAYP arg
   
   if (retval->len == 0 && ffi_types[nargs] != &ffi_type_void) {
     retval->len = cif.arg_types[nargs]->size;
-    // logger("cif_els[0]: %d\n", cif.arg_types[nargs]->elements[0] == &ffi_type_schar);
-    // logger("cif_els[1]: %d\n", cif.arg_types[nargs]->elements[1] == &ffi_type_schar);
-    // logger("cif_els[2]: %d\n", cif.arg_types[nargs]->elements[2] == &ffi_type_schar);
-    // logger("cif_els[3]: %d\n", cif.arg_types[nargs]->elements[3] == &ffi_type_schar);
-    // logger("size of return value: %u\n", retval->len);
   }
 
   void *funcpointer = FIND_ENTRY(handle, funcname);
@@ -388,23 +348,11 @@ call_function(ZARRAYP libID, const char *funcname, ZARRAYP argtypes, ZARRAYP arg
     return ZF_FAILURE;
   }
 
-  // logger("ffi_size: %u\tffi_align:%u\n", cif.arg_types[0]->size, cif.arg_types[0]->alignment);
-  // logger("nested\n\tffi_size: %u\tffi_align:%u\n", cif.arg_types[0]->elements[1]->size, cif.arg_types[0]->elements[1]->alignment);
-  // logger("whether struct is the struct\t %d\n", cif.arg_types[0] == &structs[0]);
-  // logger("whether nested struct is the struct\t %d\n", cif.arg_types[0]->elements[1] == &structs[1]);
-  // logger("whether struct is the struct\t %d\n", ffi_types[0] == &structs[0]);
-  // logger("whether nested struct is the struct\t %d\n", ffi_types[0]->elements[1] == &structs[1]);
-  // logger("struct:%x \t struct in ffi_types:%x\n", &structs[0], ffi_types[0]);
-
-  //logger("before ffi_call()\n");
   ffi_call(&cif, funcpointer, retval->data, ffi_values);
-  //logger("after ffi_call()\n");
 
   /* TODO: handle error */
 
   free_storage(&mem);
-
-  //logger("retval: %lf\n", (double)*((long double *)retval->data));
 
   return ZF_SUCCESS;
 }
@@ -459,7 +407,6 @@ pointer_set_at(ZARRAYP p, ZARRAYP ztype, ZARRAYP index, ZARRAYP value)
 
   void *address = array + (*((size_t *)index->data)) * size;
   memcpy(address, value->data, size);
-  //logger("0x%x: %u\n",  address, *((unsigned *)address));
   return ZF_SUCCESS;
 }
 
@@ -489,9 +436,7 @@ pointer_get_at(ZARRAYP p, ZARRAYP ztype, ZARRAYP index, ZARRAYP value)
 
   void *address = array + (*((size_t *)index->data)) * size;
   value->len = size;
-  memcpy(value->data, address, size);
-  //logger("0x%x: %u\n",  address, *((unsigned *)address));
-  return ZF_SUCCESS;
+  memcpy(value->data, address, size);  return ZF_SUCCESS;
 }
 
 int
