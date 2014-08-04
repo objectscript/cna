@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2014.1.1 (Build 702U)" ts="2014-08-01 18:57:57">
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2014.1.1 (Build 702U)" ts="2014-08-04 11:47:25">
 <Class name="CNA.CNA">
 <Super>%RegisteredObject</Super>
-<TimeChanged>63400,68262.25589</TimeChanged>
+<TimeChanged>63403,42420.713354</TimeChanged>
 <TimeCreated>63383,58144.669569</TimeCreated>
 
 <Property name="LibId">
@@ -123,6 +123,7 @@
 		set type = types.GetAt(i)
 		set structType = structType _ ..ConvertTypeFromCacheToCNA(type)
 	}
+	
 	return structType
 ]]></Implementation>
 </Method>
@@ -328,7 +329,7 @@
 
 <Method name="ConvertIntegerFromCNAToCache">
 <ClassMethod>1</ClassMethod>
-<FormalSpec>type:%String,size:%Integer,value:%String</FormalSpec>
+<FormalSpec>type:%Integer,size:%Integer,value:%String</FormalSpec>
 <Private>1</Private>
 <ReturnType>%Integer</ReturnType>
 <Implementation><![CDATA[
@@ -353,7 +354,7 @@
 </Method>
 
 <Method name="ConvertFromCacheToCNA">
-<FormalSpec>type:%String,value:%String</FormalSpec>
+<FormalSpec>type,value</FormalSpec>
 <Private>1</Private>
 <ReturnType>%String</ReturnType>
 <Implementation><![CDATA[
@@ -387,9 +388,8 @@
 </Method>
 
 <Method name="ConvertFromCNAToCache">
-<FormalSpec>type:%Integer,value:%String</FormalSpec>
+<FormalSpec>type,value:%String</FormalSpec>
 <Private>1</Private>
-<ReturnType>%String</ReturnType>
 <Implementation><![CDATA[
 	if (type >= ..#NTYPES) {
 			do ..ThrowMessage("Incorrect type")	
@@ -417,7 +417,7 @@
 </Method>
 
 <Method name="CallFunction">
-<FormalSpec>name:%String,returnType:%Integer,*returnValue:%String,argTypes:%ListOfDataTypes,args...:%List</FormalSpec>
+<FormalSpec>name:%String,returnType,*returnValue,argTypes:%ListOfDataTypes,args...:%List</FormalSpec>
 <ReturnType>%Status</ReturnType>
 <Implementation><![CDATA[
 	try {
@@ -532,7 +532,7 @@
 <Method name="PointerGetAt">
 <Description>
 Access to array element. Operating with pointers may be unsafe!</Description>
-<FormalSpec>pointer:%String,type:%Integer,index:%Integer,*value:%String</FormalSpec>
+<FormalSpec>pointer:%String,type,index:%Integer,*value</FormalSpec>
 <ReturnType>%Status</ReturnType>
 <Implementation><![CDATA[
 	try {
@@ -552,7 +552,7 @@ Access to array element. Operating with pointers may be unsafe!</Description>
 <Method name="PointerSetAt">
 <Description>
 Assigning to array element. Operating with pointers may be unsafe!</Description>
-<FormalSpec>pointer:%String,type:%Integer,index:%Integer,value:%String</FormalSpec>
+<FormalSpec>pointer:%String,type,index:%Integer,value</FormalSpec>
 <ReturnType>%Status</ReturnType>
 <Implementation><![CDATA[
 	try {
