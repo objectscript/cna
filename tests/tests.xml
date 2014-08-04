@@ -394,11 +394,15 @@
 	
 	set st = cna.ConvertStreamToPointer(file, .pointer)
 	do $$$AssertStatusOK(st, "Convert Ulysses to pointer")
-		
+	
+	set st = cna.ConvertStringToPointer(..Ulysses, .path)
+	do $$$AssertStatusOK(st, "Convert Ulysses path to pointer")
+
 	set argTypes = ##class(%ListOfDataTypes).%New()
 	do argTypes.Insert(cna.#POINTER)
+	do argTypes.Insert(cna.#POINTER)
 	
-	set st = cna.CallFunction("compare_string_and_ulysses", cna.#INT, .retVal, argTypes, pointer)
+	set st = cna.CallFunction("compare_string_and_ulysses", cna.#INT, .retVal, argTypes, pointer, path)
 	do $$$AssertStatusOK(st, "Call comparing Ulysses and stream")
 	do $$$AssertEquals(retVal, 1, "Check retval")
 	

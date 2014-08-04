@@ -158,14 +158,14 @@ sum_long_double(long double a, long double b)
 }
 
 EXPORT int
-compare_string_and_ulysses(const char *s)
+compare_string_and_ulysses(const char *s, const char *path)
 {
-  FILE *fd = fopen("C:\\Users\\dd\\Dropbox\\is\\ulysses.txt", "rb");
+  FILE *fd = fopen(path, "rb");
   fseek(fd, 0ll, SEEK_END);
   size_t size = ftell(fd);
   rewind(fd);
   char *buf = malloc(sizeof(char) * size);
-  //logger("size: %llu\tstrlen(s): %llu\n", size, strlen(s));
+  logger("size: %llu\tstrlen(s): %llu\n", size, strlen(s));
   
   if (!buf) { 
     logger("Can't allocate memory\n");
