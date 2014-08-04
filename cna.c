@@ -35,8 +35,13 @@ logger(const char *format, ...)
   va_start(args, format);
   
   #ifdef _WIN32
-    /* TODO: write to the RIGHT place */
-    FILE *fd = fopen("C:\\Users\\dd\\Dropbox\\is\\CNA\\log.txt", "a");
+    char path[MAX_PATH];
+    HMODULE hm;
+    GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, (LPCSTR) &logger, &hm);
+    GetModuleFileNameA(hm, path, sizeof(path));
+    strcpy(strrchr(path, '\\') + 1, "log.txt");
+
+    FILE *fd = fopen(path, "a");
     time_t now;
     time(&now);
     fprintf(fd, "%s\t", ctime(&now));
@@ -380,7 +385,6 @@ free_pointer(ZARRAYP p)
 int
 pointer_set_at(ZARRAYP p, ZARRAYP ztype, ZARRAYP index, ZARRAYP value)
 {
-  logger("pointer_set_at():\n\t%u\n", *((unsigned *)value->data));
   void *array;
   if (p->len != sizeof(void *)) {
     logger("Wrong size of ZARRAY 'pointer'\n");
@@ -413,7 +417,6 @@ pointer_set_at(ZARRAYP p, ZARRAYP ztype, ZARRAYP index, ZARRAYP value)
 int
 pointer_get_at(ZARRAYP p, ZARRAYP ztype, ZARRAYP index, ZARRAYP value)
 {
-  logger("pointer_get_at():\n");
   void *array;
   if (p->len != sizeof(void *)) {
     logger("Wrong size of ZARRAY 'pointer'\n");

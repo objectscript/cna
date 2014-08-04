@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2014.1.1 (Build 702U)" ts="2014-08-04 12:58:04">
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2014.1.1 (Build 702U)" ts="2014-08-04 15:17:34">
 <Class name="CNA.CNA">
 <Super>%RegisteredObject</Super>
-<TimeChanged>63403,46642.944782</TimeChanged>
+<TimeChanged>63403,51009.053929</TimeChanged>
 <TimeCreated>63383,58144.669569</TimeCreated>
 
 <Property name="LibId">
@@ -137,7 +137,7 @@ Structure type.</Description>
 
 <Parameter name="NTYPES">
 <Description>
-Number of all available in CNA types.</Description>
+Number of all available types in CNA.</Description>
 <Default>17</Default>
 </Parameter>
 

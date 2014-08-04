@@ -165,7 +165,7 @@ compare_string_and_ulysses(const char *s)
   size_t size = ftell(fd);
   rewind(fd);
   char *buf = malloc(sizeof(char) * size);
-  logger("size: %llu\tstrlen(s): %llu\n", size, strlen(s));
+  //logger("size: %llu\tstrlen(s): %llu\n", size, strlen(s));
   
   if (!buf) { 
     logger("Can't allocate memory\n");
