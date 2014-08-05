@@ -42,6 +42,9 @@ logger(const char *format, ...)
     strcpy(strrchr(path, '\\') + 1, "log.txt");
 
     FILE *fd = fopen(path, "a");
+    if (!fd) {
+      return;
+    }
     time_t now;
     time(&now);
     fprintf(fd, "%s\t", ctime(&now));

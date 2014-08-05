@@ -18,7 +18,16 @@ logger(const char *format, ...)
   va_start(args, format);
   
   #ifdef _WIN32
-    FILE *fd = fopen("C:\\Users\\dd\\Dropbox\\is\\CNA\\log.txt", "a");
+    char path[MAX_PATH];
+    HMODULE hm;
+    GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, (LPCSTR) &logger, &hm);
+    GetModuleFileNameA(hm, path, sizeof(path));
+    strcpy(strrchr(path, '\\') + 1, "log.txt");
+
+    FILE *fd = fopen(path, "a");
+    if (!fd) {
+      return;
+    }
     time_t now;
     time(&now);
     fprintf(fd, "%s\t", ctime(&now));
@@ -61,16 +70,6 @@ cstrlen(const char *s)
   unsigned int i;
   for (i = 0; *s; ++i, ++s) {}
   return i;
-}
-
-EXPORT unsigned int
-print(const char *s)
-{
-  FILE *fd = fopen("C:\\Users\\dd\\Dropbox\\is\\CNA\\log.txt", "a");
-  if (!fd) { return 25; }
-  fprintf(fd, "\n\t%s\n", s);
-  fclose(fd);
-  return 99;
 }
 
 EXPORT void *
