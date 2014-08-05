@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2014.1.1 (Build 702U)" ts="2014-08-04 17:24:34">
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2014.1.1 (Build 702U)" ts="2014-08-05 12:14:10">
 <Class name="CNA.Tests">
 <Super>%UnitTest.TestCase</Super>
-<TimeChanged>63403,62659.304816</TimeChanged>
+<TimeChanged>63404,43962.583872</TimeChanged>
 <TimeCreated>63384,43091.390095</TimeCreated>
 
 <Property name="CNAPath">
@@ -397,7 +397,7 @@
 	
 	set st = cna.ConvertStringToPointer(..Ulysses, .path)
 	do $$$AssertStatusOK(st, "Convert Ulysses path to pointer")
-
+		
 	set argTypes = ##class(%ListOfDataTypes).%New()
 	do argTypes.Insert(cna.#POINTER)
 	do argTypes.Insert(cna.#POINTER)
@@ -439,14 +439,15 @@ Method OnAfterAllTests() As %Status
 		set delim = "\"
 		set suffix = ".dll"
 	}
-	set ..CNAPath = ^UnitTestRoot _ "libcna" _ suffix
-	set ..testLib = ^UnitTestRoot _ "tests" _ delim _ "libtest" _ suffix
-	set hunspellDir = ^UnitTestRoot _ ".." _ delim _ "hunspell" _ delim 
+	set ..CNAPath = ^UnitTestRoot _ delim _ ".." _ delim _ "libcna" _ suffix
+	set ..testLib = ^UnitTestRoot _ delim _ "libtest" _ suffix
+	set hunspellDir = ^UnitTestRoot _ delim _ ".." _ delim _ ".." _ delim _ "hunspell" _ delim 
 	set ..Hunspell = hunspellDir _ "libhunspell" _ suffix
 	set ..HunspellAff = hunspellDir _ "ru_RU.aff"
 	set ..HunspellDic = hunspellDir _ "ru_RU.dic"
 	
-	set ..Ulysses = ^UnitTestRoot _ ".." _ delim _ "ulysses.txt"
+	set ..Ulysses = ^UnitTestRoot _ delim _ ".." _ delim _ ".." _ delim _ "ulysses.txt"
+
  	Quit $$$OK
 ]]></Implementation>
 </Method>

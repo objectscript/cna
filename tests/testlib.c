@@ -161,12 +161,15 @@ EXPORT int
 compare_string_and_ulysses(const char *s, const char *path)
 {
   FILE *fd = fopen(path, "rb");
+  if (!fd) {
+    logger("Can't open Ulysses for reading\n");
+    return -1;
+  }
   fseek(fd, 0ll, SEEK_END);
   size_t size = ftell(fd);
   rewind(fd);
   char *buf = malloc(sizeof(char) * size);
-  logger("size: %llu\tstrlen(s): %llu\n", size, strlen(s));
-  
+
   if (!buf) { 
     logger("Can't allocate memory\n");
     return -1;

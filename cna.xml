@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2014.1.1 (Build 702U)" ts="2014-08-04 17:24:34">
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2014.1.1 (Build 702U)" ts="2014-08-05 12:14:10">
 <Class name="CNA.CNA">
 <Super>%RegisteredObject</Super>
-<TimeChanged>63403,51009.053929</TimeChanged>
+<TimeChanged>63404,42338.761878</TimeChanged>
 <TimeCreated>63383,58144.669569</TimeCreated>
 
 <Property name="LibId">
@@ -459,7 +459,7 @@ Number of all available types in CNA.</Description>
 <Description><![CDATA[
 Calls function <var>name</var> from previously loaded dynamic library.
 
-<p> You need to specify types of this function return value and types of all arguments.
+<p> You need to specify type of return value of the function and types of all arguments.
 Types may be represented as one of <class>CNA.CNA</class> parameters if it is a plain C datatype or as <class>%ListOfDataTypes</class> of parameters if it is a structure.
 You need to put all argument types in one collection <class>%ListOfDataTypes</class> and pass it to argument <var>argTypes</var>.
 If there is no arguments you need to pass an empty collection.
