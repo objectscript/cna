@@ -1,25 +1,31 @@
 CC = gcc
 RM = rm
 
-CFLAGS = -Wall -Wextra -m64 -fpic
+CFLAGS = -Wall -g -Wextra -m64 -fpic
 
 SYS := $(shell gcc -dumpmachine)
 ifneq (, $(findstring linux, $(SYS)))
+	
 	SUFFIX = so
 	LDFLAGS = -shared
 	LIBS = -ldl -lffi
+	CFLAGS += -I/usr/local/lib/libffi-3.1/include/
+	ifndef GLOBALS_HOME
+		$(error Couldn't find GLOBALS_HOME)
+	endif
+
 else ifneq (, $(findstring mingw, $(SYS)))
 	
 	SUFFIX = dll
 	LDFLAGS = -mdll
 	LIBS = -L./libs -lffi
 	CFLAGS += -I./libs/include
+	ifndef GLOBALS_HOME
+		GLOBALS_HOME = C:/InterSystems/Cache
+	endif
+
 else 
 	$(error Unsupported build platform)
-endif
-	
-ifndef GLOBALS_HOME
-	$(error Couldn't find GLOBALS_HOME)
 endif
 
 CFLAGS += -I${GLOBALS_HOME}/dev/cpp/include

@@ -7,6 +7,7 @@
 
 #ifdef _WIN32
   #define EXPORT __declspec(dllexport)
+  #include <windows.h>
 #else /* UNIX */
   #define EXPORT
 #endif /* _WIN32 */
@@ -151,8 +152,6 @@ sum_float(float a, float b)
 EXPORT long double
 sum_long_double(long double a, long double b)
 {
-  char s[100];
-  print(s);
   return a + b;
 }
 
