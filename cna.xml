@@ -467,42 +467,36 @@ If there is no arguments you need to pass an empty collection.
 <p> Argument values is passed the same way as a simple function arguments after first four of it.
 
 <p>See examples in <class>CNA.Tests</class>.]]></Description>
-<FormalSpec>name:%String,returnType,*returnValue,argTypes:%ListOfDataTypes,args...:%List</FormalSpec>
-<ReturnType>%Status</ReturnType>
+<FormalSpec>name:%String,returnType,argTypes:%ListOfDataTypes,args...:%List</FormalSpec>
 <Implementation><![CDATA[
-	try {
-		set callFunc = $zf(-4, 3, ..CNAId, "call_function")
-		if ('$data(args)) {
-			set args = 0
-		}
-		if (argTypes.Size '= args) {
-			do ..ThrowMessage("Size of collection of argument types and number of arguments must be equal.")
-		}
-		set cnaArgTypes = ""
-		set cnaArgs = ""
-		
-		for i = 1:1:args {
-			set val = $GET(args(i))
-			set type = argTypes.GetAt(i)
-			
-			
-			if ($ISOBJECT(type)) {
-				do ..GetSizeAndAlignment(type, .size, .alignment) 
-				set cnaArgs = cnaArgs _ ..ConvertIntegerFromCacheToCNA(..#SIZET, $ASCII(..TypeSizes, ..#SIZET + 1), size)
-			}
-			
-			set cnaArgs = cnaArgs _ ..ConvertFromCacheToCNA(type, val)
-			set cnaArgTypes = cnaArgTypes _ ..ConvertTypeFromCacheToCNA(type)
-		}
-		set cnaArgTypes = cnaArgTypes _ ..ConvertTypeFromCacheToCNA(returnType)
-		set cnaRet = $zf(-5, ..CNAId, callFunc, ..LibId, name, cnaArgTypes, cnaArgs)
-				
-		set returnValue =  ..ConvertFromCNAToCache(returnType, cnaRet)
-	} catch ex {
-		do ex.Log()
-		return ex.AsStatus()
+	set callFunc = $zf(-4, 3, ..CNAId, "call_function")
+	if ('$data(args)) {
+		set args = 0
 	}
-	Quit $$$OK
+	if (argTypes.Size '= args) {
+		do ..ThrowMessage("Size of collection of argument types and number of arguments must be equal.")
+	}
+	set cnaArgTypes = ""
+	set cnaArgs = ""
+	
+	for i = 1:1:args {
+		set val = $GET(args(i))
+		set type = argTypes.GetAt(i)
+		
+		
+		if ($ISOBJECT(type)) {
+			do ..GetSizeAndAlignment(type, .size, .alignment) 
+			set cnaArgs = cnaArgs _ ..ConvertIntegerFromCacheToCNA(..#SIZET, $ASCII(..TypeSizes, ..#SIZET + 1), size)
+		}
+		
+		set cnaArgs = cnaArgs _ ..ConvertFromCacheToCNA(type, val)
+		set cnaArgTypes = cnaArgTypes _ ..ConvertTypeFromCacheToCNA(type)
+	}
+	set cnaArgTypes = cnaArgTypes _ ..ConvertTypeFromCacheToCNA(returnType)
+	set cnaRet = $zf(-5, ..CNAId, callFunc, ..LibId, name, cnaArgTypes, cnaArgs)
+			
+	set returnValue =  ..ConvertFromCNAToCache(returnType, cnaRet)
+	return returnValue
 ]]></Implementation>
 </Method>
 
@@ -510,33 +504,18 @@ If there is no arguments you need to pass an empty collection.
 <Description><![CDATA[
 Loads dynamic library with path <var>path</var> to CNA.]]></Description>
 <FormalSpec>path:%String</FormalSpec>
-<ReturnType>%Status</ReturnType>
 <Implementation><![CDATA[
-	try {
-		set loadLib = $zf(-4, 3, ..CNAId, "load_library")
-		set ..LibId = $zf(-5, ..CNAId, loadLib, path)
-	}catch ex {
-		do ex.Log()
-		return ex.AsStatus()
-	}
-	Quit $$$OK
+	set loadLib = $zf(-4, 3, ..CNAId, "load_library")
+	set ..LibId = $zf(-5, ..CNAId, loadLib, path)
 ]]></Implementation>
 </Method>
 
 <Method name="FreeLibrary">
 <Description>
 Releases loaded dynamic library from CNA.</Description>
-<ReturnType>%Status</ReturnType>
 <Implementation><![CDATA[
-	try {
-		set freeLib = $zf(-4, 3, ..CNAId, "free_library")
-		do $zf(-5, ..CNAId, freeLib, ..LibId)
-	} catch ex {
-		do ex.Log()
-		return ex.AsStatus()
-	}
-	
-	Quit $$$OK
+	set freeLib = $zf(-4, 3, ..CNAId, "free_library")
+	do $zf(-5, ..CNAId, freeLib, ..LibId)	
 ]]></Implementation>
 </Method>
 
@@ -545,12 +524,11 @@ Releases loaded dynamic library from CNA.</Description>
 <Private>1</Private>
 <ReturnType>%Status</ReturnType>
 <Implementation><![CDATA[
-	
-	if (('$data(CNAPath)) || ('##class(%File).Exists(CNAPath))) {
-		do ..ThrowMessage("CNA file doesn't exists")	
-	}
-	
 	try {
+		if (('$data(CNAPath)) || ('##class(%File).Exists(CNAPath))) {
+			do ..ThrowMessage("CNA file doesn't exists")	
+		}
+	
 		set ..CNAId = $zf(-4, 1, CNAPath)
 		set getSizes = $zf(-4, 3, ..CNAId, "get_sizes")
 		set ..TypeSizes = $zf(-5, ..CNAId, getSizes)
@@ -592,20 +570,12 @@ Provides access to array element with index <var>index</var>.
 <p> <var>type</var> is passed with the same rules as in <method>CallFunction</method>.
 
 <p> Operating with pointers may be unsafe!]]></Description>
-<FormalSpec>pointer:%String,type,index:%Integer,*value</FormalSpec>
-<ReturnType>%Status</ReturnType>
+<FormalSpec>pointer:%String,type,index:%Integer</FormalSpec>
 <Implementation><![CDATA[
-	try {
-	  set getAt = $zf(-4, 3, ..CNAId, "pointer_get_at")
-	  set cnaIndex = ..ConvertFromCacheToCNA(..#SIZET, index)
-	  set cnaVal = $zf(-5, ..CNAId, getAt, pointer, $CHAR(type), cnaIndex)
-	  
-	  set value = ..ConvertFromCNAToCache(type, cnaVal)
-	} catch ex {
-		do ex.Log()
-		return ex.AsStatus()	
-	}
-	Quit $$$OK
+	set getAt = $zf(-4, 3, ..CNAId, "pointer_get_at")
+	set cnaIndex = ..ConvertFromCacheToCNA(..#SIZET, index)
+	set cnaVal = $zf(-5, ..CNAId, getAt, pointer, $CHAR(type), cnaIndex)
+	return ..ConvertFromCNAToCache(type, cnaVal)
 ]]></Implementation>
 </Method>
 
@@ -619,67 +589,49 @@ Assigns <var>value</var> to array element with index <var>index</var>.
 
 <p> Operating with pointers may be unsafe!]]></Description>
 <FormalSpec>pointer:%String,type,index:%Integer,value</FormalSpec>
-<ReturnType>%Status</ReturnType>
 <Implementation><![CDATA[
-	try {
-	  set setAt = $zf(-4, 3, ..CNAId, "pointer_set_at")
-	  set cnaVal = ..ConvertFromCacheToCNA(type, value)
-	  set cnaIndex = ..ConvertFromCacheToCNA(..#SIZET, index)
-	  do $zf(-5, ..CNAId, setAt, pointer, $CHAR(type), cnaIndex, cnaVal)
-	  
-	} catch ex {
-		do ex.Log()
-		return ex.AsStatus()	
-	}
-	Quit $$$OK
+	set setAt = $zf(-4, 3, ..CNAId, "pointer_set_at")
+	set cnaVal = ..ConvertFromCacheToCNA(type, value)
+	set cnaIndex = ..ConvertFromCacheToCNA(..#SIZET, index)
+	do $zf(-5, ..CNAId, setAt, pointer, $CHAR(type), cnaIndex, cnaVal)
 ]]></Implementation>
 </Method>
 
 <Method name="ConvertStringToPointer">
 <Description><![CDATA[
 Converts Cache string to C array and returns a <var>pointer</var> to the beginning of this array.]]></Description>
-<FormalSpec>string:%String,*pointer:%String</FormalSpec>
-<ReturnType>%Status</ReturnType>
+<FormalSpec>string:%String</FormalSpec>
+<ReturnType>%String</ReturnType>
 <Implementation><![CDATA[
-	try {
 		set s2p = $zf(-4, 3, ..CNAId, "string_to_pointer")
 		set pointer = $zf(-5, ..CNAId, s2p, string)
 		do ..AllocatedMemory.Insert(pointer)
-	}catch ex {
-		do ex.Log()
-		return ex.AsStatus()
-	}
-	Quit $$$OK
+		return pointer
 ]]></Implementation>
 </Method>
 
 <Method name="ConvertStreamToPointer">
 <Description><![CDATA[
 Converts Cache stream to C array and returns a <var>pointer</var> to the beginning of this array.]]></Description>
-<FormalSpec>stream:%Stream.Object,*pointer:%String</FormalSpec>
-<ReturnType>%Status</ReturnType>
+<FormalSpec>stream:%Stream.Object</FormalSpec>
+<ReturnType>%String</ReturnType>
 <Implementation><![CDATA[
-	try {
-		set a2p = $zf(-4, 3, ..CNAId, "append_to_pointer")
-		set len = 0
-		set fullLen = 0
-		set pointer = ..ConvertFromCacheToCNA(..#SIZET, 0)
-		while (len '= -1) {
-			set len = 32768
-			set string = stream.Read(.len, .st)
-			if ($$$ISERR(st)) {
-				do ..AllocatedMemory.Insert(pointer)
-				return st
-			}
-			set pointer = $zf(-5, ..CNAId, a2p, pointer, ..ConvertFromCacheToCNA(..#SIZET, fullLen), string)			
-			set fullLen = fullLen + len
+	set a2p = $zf(-4, 3, ..CNAId, "append_to_pointer")
+	set len = 0
+	set fullLen = 0
+	set pointer = ..ConvertFromCacheToCNA(..#SIZET, 0)
+	while (len '= -1) {
+		set len = 32768
+		set string = stream.Read(.len, .st)
+		if ($$$ISERR(st)) {
+			do ..AllocatedMemory.Insert(pointer)
+			return st
 		}
-		do ..AllocatedMemory.Insert(pointer)
-	}catch ex {
-		do ex.Log()
-		return ex.AsStatus()
+		set pointer = $zf(-5, ..CNAId, a2p, pointer, ..ConvertFromCacheToCNA(..#SIZET, fullLen), string)			
+		set fullLen = fullLen + len
 	}
-	Quit $$$OK
+	do ..AllocatedMemory.Insert(pointer)
+	return pointer
 ]]></Implementation>
 </Method>
 </Class>

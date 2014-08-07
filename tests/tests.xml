@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2014.1.1 (Build 702U)" ts="2014-08-05 12:14:10">
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2014.1.1 (Build 702U)" ts="2014-08-07 18:08:39">
 <Class name="CNA.Tests">
 <Super>%UnitTest.TestCase</Super>
 <TimeChanged>63404,43962.583872</TimeChanged>
@@ -69,345 +69,313 @@
 		
 		do $zf(-3, "", "free_library", libID)
 		
-		}catch ex {
-	
-			write $system.Status.GetErrorText(ex.AsStatus(),"ru"),!
-			do $zf(-3, "")
-			do $$$AssertEquals(0, 1, "Exception were catched")
+	}catch ex {
+
+		write $system.Status.GetErrorText(ex.AsStatus(),"ru"),!
+		do $zf(-3, "")
+		do $$$AssertEquals(0, 1, "Exception were catched")
 	}
 ]]></Implementation>
 </Method>
 
 <Method name="TestAPI">
 <Implementation><![CDATA[
+	try {
+		do $$$AssertEquals(##class(%File).Exists(..testLib), 1, "testLib file exists")
 
-	do $$$AssertEquals(##class(%File).Exists(..testLib), 1, "testLib file exists")
+		set cna = ##class(CNA.CNA).%New(..CNAPath)
+		do cna.LoadLibrary(..testLib)
+		
+		set argTypes = ##class(%ListOfDataTypes).%New()
+		do argTypes.Insert(cna.#INT64)
+		do argTypes.Insert(cna.#DOUBLE)
+		set retVal = cna.CallFunction("mul", cna.#DOUBLE, argTypes, 10, $double(1.5))
+		do $$$AssertEquals(retVal, $double(15), "Check return value of mul()")
+		
+		do argTypes.Clear()
+		do argTypes.Insert(cna.#DOUBLE)
+		set retVal = cna.CallFunction("square", cna.#DOUBLE, argTypes, $double(12341.12311))
+		do $$$AssertEquals(retVal, $double(12341.12311) * $double(12341.12311), "Check return value of square()")
 
-	set cna = ##class(CNA.CNA).%New(..CNAPath)
-	set st = cna.LoadLibrary(..testLib)
-	do $$$AssertStatusOK(st, "Load test library")
-	
-	set argTypes = ##class(%ListOfDataTypes).%New()
-	do argTypes.Insert(cna.#INT64)
-	do argTypes.Insert(cna.#DOUBLE)
-	set st = cna.CallFunction("mul", cna.#DOUBLE, .retVal, argTypes, 10, $double(1.5))
-	do $$$AssertStatusOK(st, "Call mul() from test library")
-	do $$$AssertEquals(retVal, $double(15), "Check return value of mul()")
-	
-	do argTypes.Clear()
-	do argTypes.Insert(cna.#DOUBLE)
-	set st = cna.CallFunction("square", cna.#DOUBLE, .retVal, argTypes, $double(12341.12311))
-	do $$$AssertStatusOK(st, "Call square() from test library")
-	do $$$AssertEquals(retVal, $double(12341.12311) * $double(12341.12311), "Check return value of square()")
+		do argTypes.Clear()
+		do argTypes.Insert(cna.#UINT)
+		do argTypes.Insert(cna.#UINT)
+		do argTypes.Insert(cna.#UINT)
+		do argTypes.Insert(cna.#UINT)
+		do argTypes.Insert(cna.#UINT)
+		set retVal = cna.CallFunction("sum", cna.#UINT, argTypes, 1243, 1231, 121, 12123, 121)
+		do $$$AssertEquals(retVal, 1243 + 1231 + 121 + 12123 + 121, "Check return value of sum()")
 
-	do argTypes.Clear()
-	do argTypes.Insert(cna.#UINT)
-	do argTypes.Insert(cna.#UINT)
-	do argTypes.Insert(cna.#UINT)
-	do argTypes.Insert(cna.#UINT)
-	do argTypes.Insert(cna.#UINT)
-	set st = cna.CallFunction("sum", cna.#UINT, .retVal, argTypes, 1243, 1231, 121, 12123, 121)
-	do $$$AssertStatusOK(st, "Call sum() from test library")
-	do $$$AssertEquals(retVal, 1243 + 1231 + 121 + 12123 + 121, "Check return value of sum()")
+		do argTypes.Clear()
+		set retVal = cna.CallFunction("five", cna.#INT, argTypes)
+		do $$$AssertEquals(retVal, 5, "Check return value of five()")
 
-	set st = cna.CallFunction("sum", cna.#UINT, .retVal, argTypes, 1243, -1231, 121, 12123, 121)
-	do $$$AssertStatusNotOK(st, "Invalid argument value: -1231 for UINT")
-
-	set st = cna.CallFunction("sum", cna.#UINT, .retVal, argTypes, 12431231231231231231312312, 113, 121, 12123, 121)
-	do $$$AssertStatusNotOK(st, "Invalid argument value: 12431231231231231231312312 for UINT")
-	
-	do argTypes.Clear()
-	set st = cna.CallFunction("five", cna.#INT, .retVal, argTypes)
- 	do $$$AssertStatusOK(st, "Call five() from test library")
-	do $$$AssertEquals(retVal, 5, "Check return value of five()")
-
-	
-	set st = cna.FreeLibrary()
-	do $$$AssertStatusOK(st, "Free test library")
-	set st = cna.LoadLibrary("selfla")
-	do $$$AssertStatusNotOK(st, "Fail to load library with wrong path")
+		do cna.FreeLibrary()
+	}catch ex {
+		do cna.FreeLibrary()
+		do $$$AssertEquals(0, 1, $system.Status.GetErrorText(ex.AsStatus()))
+	}
 ]]></Implementation>
 </Method>
 
 <Method name="TestHunspell">
 <Implementation><![CDATA[
-	if ($SYSTEM.Version.GetOS() = "UNIX") {
-		//Not implemented yet
-		return $$$OK
-	} 
-	
-	
-	set cna = ##class(CNA.CNA).%New(..CNAPath)
-	set st = cna.LoadLibrary(..Hunspell)
-	do $$$AssertStatusOK(st, "Load Hunspell")
-	
-	set st =  cna.ConvertStringToPointer(..HunspellAff, .aff)
-	do $$$AssertStatusOK(st, "Create C-string")
-	set st =  cna.ConvertStringToPointer(..HunspellDic, .dic)
-	do $$$AssertStatusOK(st, "Create C-string")
-	
-	set argTypes = ##class(%ListOfDataTypes).%New()
-	do argTypes.Insert(cna.#POINTER)
-	do argTypes.Insert(cna.#POINTER)
-	
-	set st =  cna.CallFunction("Hunspell_create", cna.#POINTER, .hunspell, argTypes, aff, dic)
-	do $$$AssertStatusOK(st, "Hunspell ID")
-	
-	set st =  cna.ConvertStringToPointer($ZCVT("лымузин", "O", "UTF8"), .bad)
-	do $$$AssertStatusOK(st, "Create C-string")
-	set st =  cna.ConvertStringToPointer($ZCVT("лимузин", "O", "UTF8"), .good)
-	do $$$AssertStatusOK(st, "Create C-string")
-	
-	set st =  cna.CallFunction("Hunspell_spell", cna.#UINT, .retVal, argTypes, hunspell, bad)
-	do $$$AssertStatusOK(st, "Call spell()")
-	do $$$AssertEquals(retVal, 0, "Incorrect word")
-	
-	set st =  cna.CallFunction("Hunspell_spell", cna.#UINT, .retVal, argTypes, hunspell, good)
-	do $$$AssertStatusOK(st, "Call spell()")
-	do $$$AssertNotEquals(retVal, 0, "Correct word")
-	
-	set st = cna.FreeLibrary()
-	do $$$AssertStatusOK(st, "Free test library")
+	try {
+		if ($SYSTEM.Version.GetOS() = "UNIX") {
+			//Not implemented yet
+			return $$$OK
+		} 
+		
+		
+		set cna = ##class(CNA.CNA).%New(..CNAPath)
+		do cna.LoadLibrary(..Hunspell)
+		
+		set aff = cna.ConvertStringToPointer(..HunspellAff)
+		set dic = cna.ConvertStringToPointer(..HunspellDic)
+		
+		set argTypes = ##class(%ListOfDataTypes).%New()
+		do argTypes.Insert(cna.#POINTER)
+		do argTypes.Insert(cna.#POINTER)
+		
+		set hunspell =  cna.CallFunction("Hunspell_create", cna.#POINTER, argTypes, aff, dic)
+		
+		set bad  =  cna.ConvertStringToPointer($ZCVT("лымузин", "O", "UTF8"))
+		set good =  cna.ConvertStringToPointer($ZCVT("лимузин", "O", "UTF8"))
+		
+		set retVal =  cna.CallFunction("Hunspell_spell", cna.#UINT, argTypes, hunspell, bad)
+		do $$$AssertEquals(retVal, 0, "Incorrect word")
+		
+		set retVal =  cna.CallFunction("Hunspell_spell", cna.#UINT, argTypes, hunspell, good)
+		do $$$AssertNotEquals(retVal, 0, "Correct word")
+		
+		do cna.FreeLibrary()
+	}catch ex {
+		do cna.FreeLibrary()
+		do $$$AssertEquals(0, 1, $system.Status.GetErrorText(ex.AsStatus()))
+	}
 ]]></Implementation>
 </Method>
 
 <Method name="TestPointers">
 <Implementation><![CDATA[
-
-	set cna = ##class(CNA.CNA).%New(..CNAPath)
-	set st = cna.LoadLibrary(..testLib)
-	do $$$AssertStatusOK(st, "Load testLib")
-	
-	set argTypes = ##class(%ListOfDataTypes).%New()
-	do argTypes.Insert(cna.#SIZET)
-	
-	set st = cna.CallFunction("mal", cna.#POINTER, .memory, argTypes, 8)
-	do $$$AssertStatusOK(st, "Allocate memory")
-	
-	set st = cna.PointerSetAt(memory, cna.#UINT, 0, 12345678)
-	do $$$AssertStatusOK(st, "Set memory[0] to 12345678")
-	
-	set st = cna.PointerSetAt(memory, cna.#UINT, 1, 1313)
-	do $$$AssertStatusOK(st, "Set memory[1] to 1313")
-	
-	set st = cna.PointerGetAt(memory, cna.#UINT, 0, .mem0)
-	do $$$AssertStatusOK(st, "Get memory[0]")
-	do $$$AssertEquals(mem0, 12345678, "memory[0] must be equal to 12345678")
-	
-	set st = cna.PointerGetAt(memory, cna.#UINT, 1, .mem1)
-	do $$$AssertStatusOK(st, "Get memory[1]")
-	do $$$AssertEquals(mem1, 1313, "memory[1] must be equal to 1313")
-	
-	do argTypes.Clear()
-	do argTypes.Insert(cna.#POINTER)
-	
-	set st = cna.CallFunction("fr", cna.#VOID, , argTypes, memory)
-	do $$$AssertStatusOK(st, "Free memory")
-	
-	set st = cna.FreeLibrary()
-	do $$$AssertStatusOK(st, "Free test library")
+	try {
+		set cna = ##class(CNA.CNA).%New(..CNAPath)
+		do cna.LoadLibrary(..testLib)
+		
+		set argTypes = ##class(%ListOfDataTypes).%New()
+		do argTypes.Insert(cna.#SIZET)
+		
+		set memory = cna.CallFunction("mal", cna.#POINTER, argTypes, 8)
+		
+		do cna.PointerSetAt(memory, cna.#UINT, 0, 12345678)		
+		do cna.PointerSetAt(memory, cna.#UINT, 1, 1313)
+		
+		set mem0 = cna.PointerGetAt(memory, cna.#UINT, 0)
+		do $$$AssertEquals(mem0, 12345678, "memory[0] must be equal to 12345678")
+		
+		set mem1 = cna.PointerGetAt(memory, cna.#UINT, 1)
+		do $$$AssertEquals(mem1, 1313, "memory[1] must be equal to 1313")
+		
+		do argTypes.Clear()
+		do argTypes.Insert(cna.#POINTER)
+		
+		do cna.CallFunction("fr", cna.#VOID, argTypes, memory)
+		
+		do cna.FreeLibrary()
+	}catch ex {
+		do cna.FreeLibrary()
+		do $$$AssertEquals(0, 1, $system.Status.GetErrorText(ex.AsStatus()))
+	}
 ]]></Implementation>
 </Method>
 
 <Method name="TestIntegers">
 <Implementation><![CDATA[
+	try {
+		set cna = ##class(CNA.CNA).%New(..CNAPath)
+		do cna.LoadLibrary(..testLib)
 
-	
-	set cna = ##class(CNA.CNA).%New(..CNAPath)
-	set st = cna.LoadLibrary(..testLib)
-	do $$$AssertStatusOK(st, "Load ..testLib")
+		set argTypes = ##class(%ListOfDataTypes).%New()
+		
+		do argTypes.Clear()
+		do argTypes.Insert(cna.#UCHAR)
+		set retVal = cna.CallFunction("_uchar", cna.#UCHAR, argTypes, $zhex("FD"))
+		do $$$AssertEquals(retVal, $zhex("FD"), "Check uchar() return value")
+		
+		do argTypes.Clear()
+		do argTypes.Insert(cna.#SCHAR)
+		set retVal = cna.CallFunction("_schar", cna.#SCHAR, argTypes, -3)
+		do $$$AssertEquals(retVal, -3, "Check schar() return value")
+		
+		do argTypes.Clear()
+		do argTypes.Insert(cna.#USHORT)
+		set retVal = cna.CallFunction("_ushort", cna.#USHORT, argTypes, $zhex("FFFD"))
+		do $$$AssertEquals(retVal, $zhex("FFFD"), "Check ushort() return value")
+		
+		do argTypes.Clear()
+		do argTypes.Insert(cna.#SHORT)
+		set retVal = cna.CallFunction("_sshort", cna.#SHORT, argTypes, -3)
+		do $$$AssertEquals(retVal, -3, "Check sshort() return value")
 
-	set argTypes = ##class(%ListOfDataTypes).%New()
-	
-	do argTypes.Clear()
-	do argTypes.Insert(cna.#UCHAR)
-	set st = cna.CallFunction("_uchar", cna.#UCHAR, .retVal, argTypes, $zhex("FD"))
-	do $$$AssertStatusOK(st, "Call uchar()")
-	do $$$AssertEquals(retVal, $zhex("FD"), "Check uchar() return value")
-	
-	do argTypes.Clear()
-	do argTypes.Insert(cna.#SCHAR)
-	set st = cna.CallFunction("_schar", cna.#SCHAR, .retVal, argTypes, -3)
-	do $$$AssertStatusOK(st, "Call schar()")
-	do $$$AssertEquals(retVal, -3, "Check schar() return value")
-	
-	do argTypes.Clear()
-	do argTypes.Insert(cna.#USHORT)
-	set st = cna.CallFunction("_ushort", cna.#USHORT, .retVal, argTypes, $zhex("FFFD"))
-	do $$$AssertStatusOK(st, "Call ushort()")
-	do $$$AssertEquals(retVal, $zhex("FFFD"), "Check ushort() return value")
-	
-	do argTypes.Clear()
-	do argTypes.Insert(cna.#SHORT)
-	set st = cna.CallFunction("_sshort", cna.#SHORT, .retVal, argTypes, -3)
-	do $$$AssertStatusOK(st, "Call sshort()")
-	do $$$AssertEquals(retVal, -3, "Check sshort() return value")
+		
+		do argTypes.Clear()
+		do argTypes.Insert(cna.#UINT)
+		set retVal = cna.CallFunction("_uint", cna.#UINT, argTypes, $zhex("FFFFFFFD"))
+		do $$$AssertEquals(retVal, $zhex("FFFFFFFD"), "Check uint() return value")
+		
+		do argTypes.Clear()
+		do argTypes.Insert(cna.#INT)
+		set retVal = cna.CallFunction("_sint", cna.#INT, argTypes, -3)
+		do $$$AssertEquals(retVal, -3, "Check sint() return value")
 
-	
-	do argTypes.Clear()
-	do argTypes.Insert(cna.#UINT)
-	set st = cna.CallFunction("_uint", cna.#UINT, .retVal, argTypes, $zhex("FFFFFFFD"))
-	do $$$AssertStatusOK(st, "Call uint()")
-	do $$$AssertEquals(retVal, $zhex("FFFFFFFD"), "Check uint() return value")
-	
-	do argTypes.Clear()
-	do argTypes.Insert(cna.#INT)
-	set st = cna.CallFunction("_sint", cna.#INT, .retVal, argTypes, -3)
-	do $$$AssertStatusOK(st, "Call sint()")
-	do $$$AssertEquals(retVal, -3, "Check sint() return value")
+		
+		do argTypes.Clear()
+		do argTypes.Insert(cna.#ULONG)
+		set retVal = cna.CallFunction("_ulong", cna.#ULONG, argTypes, $zhex("FFFFFFFD"))
+		do $$$AssertEquals(retVal, $zhex("FFFFFFFD"), "Check ulong() return value")
+		
+		do argTypes.Clear()
+		do argTypes.Insert(cna.#LONG)
+		set retVal = cna.CallFunction("_slong", cna.#LONG, argTypes, -3)
+		do $$$AssertEquals(retVal, -3, "Check slong() return value")
 
-	
-	do argTypes.Clear()
-	do argTypes.Insert(cna.#ULONG)
-	set st = cna.CallFunction("_ulong", cna.#ULONG, .retVal, argTypes, $zhex("FFFFFFFD"))
-	do $$$AssertStatusOK(st, "Call ulong()")
-	do $$$AssertEquals(retVal, $zhex("FFFFFFFD"), "Check ulong() return value")
-	
-	do argTypes.Clear()
-	do argTypes.Insert(cna.#LONG)
-	set st = cna.CallFunction("_slong", cna.#LONG, .retVal, argTypes, -3)
-	do $$$AssertStatusOK(st, "Call slong()")
-	do $$$AssertEquals(retVal, -3, "Check slong() return value")
-
-	
-	do argTypes.Clear()
-	do argTypes.Insert(cna.#UINT64)
-	set st = cna.CallFunction("_uint64", cna.#UINT64, .retVal, argTypes, 1234567890)
-	do $$$AssertStatusOK(st, "Call uint64()")
-	do $$$AssertEquals(retVal, 1234567890, "Check uint64() return value")
-	
-	do argTypes.Clear()
-	do argTypes.Insert(cna.#INT64)
-	set st = cna.CallFunction("_sint64", cna.#INT64, .retVal, argTypes, -3)
-	do $$$AssertStatusOK(st, "Call sint64()")
-	do $$$AssertEquals(retVal, -3, "Check sint64() return value")
-	
-	set st = cna.FreeLibrary()
-	do $$$AssertStatusOK(st, "Free test library")
+		
+		do argTypes.Clear()
+		do argTypes.Insert(cna.#UINT64)
+		set retVal = cna.CallFunction("_uint64", cna.#UINT64, argTypes, 1234567890)
+		do $$$AssertEquals(retVal, 1234567890, "Check uint64() return value")
+		
+		do argTypes.Clear()
+		do argTypes.Insert(cna.#INT64)
+		set retVal = cna.CallFunction("_sint64", cna.#INT64, argTypes, -3)
+		do $$$AssertEquals(retVal, -3, "Check sint64() return value")
+		
+		do cna.FreeLibrary()
+	}catch ex {
+		do cna.FreeLibrary()
+		do $$$AssertEquals(0, 1, $system.Status.GetErrorText(ex.AsStatus()))
+	}
 ]]></Implementation>
 </Method>
 
 <Method name="TestStructures">
 <Implementation><![CDATA[
-
-	set cna = ##class(CNA.CNA).%New(..CNAPath)
-	set st = cna.LoadLibrary(..testLib)
-	do $$$AssertStatusOK(st, "Load test library")
-	
-	set argTypes = ##class(%ListOfDataTypes).%New()
-	set structType = ##class(%ListOfDataTypes).%New()
-	do structType.Insert(cna.#SCHAR)
-	do structType.Insert(cna.#INT64)
-	do structType.Insert(cna.#SCHAR)
-	do argTypes.Insert(structType)
-	
-	set structVal = ##class(%ListOfDataTypes).%New()
-	do structVal.Insert(12)
-	do structVal.Insert(2114)
-	do structVal.Insert(74)
-	
-	set st = cna.CallFunction("sum_st", cna.#INT64, .retVal, argTypes, structVal)
-	do $$$AssertStatusOK(st, "Call sum_st() from test library")
-	do $$$AssertEquals(retVal, 2200, "Check return value of sum_st()")
-	
-	
-	do argTypes.Clear()
-	set st = cna.CallFunction("create_st", structType, .retVal, argTypes)
-	do $$$AssertStatusOK(st, "Call create_st() from test library")
-	do $$$AssertEquals(retVal.GetAt(1), 1, "Check return value of create_st()")
-	do $$$AssertEquals(retVal.GetAt(2), 2, "Check return value of create_st()")
-	do $$$AssertEquals(retVal.GetAt(3), 3, "Check return value of create_st()")
-	
-	
-	set nestedType = ##class(%ListOfDataTypes).%New()
-	do nestedType.Insert(cna.#SCHAR)
-	do nestedType.Insert(cna.#INT64)
-	do nestedType.Insert(cna.#SCHAR)
-	
-	do structType.Clear()
-	do structType.Insert(cna.#SCHAR)
-	do structType.Insert(nestedType)
-	do structType.Insert(cna.#SCHAR)
-	
-	do argTypes.Clear()
-	do argTypes.Insert(structType)
-	
-	set nestedVal = ##class(%ListOfDataTypes).%New()
-	do nestedVal.Insert(-14)
-	do nestedVal.Insert(33100)
-	do nestedVal.Insert(28)
-	
-	do structVal.Clear()
-	do structVal.Insert(12)
-	do structVal.Insert(nestedVal)
-	do structVal.Insert(74)
-	
-	
-	
-	set st = cna.CallFunction("sum_nested", cna.#INT64, .retVal, argTypes, structVal)
-	do $$$AssertStatusOK(st, "Call sum_nested() from test library")
-	do $$$AssertEquals(retVal, 33200, "Check return value of sum_nested()")
-	
+	try {
+		set cna = ##class(CNA.CNA).%New(..CNAPath)
+		do cna.LoadLibrary(..testLib)
 		
-	set st = cna.FreeLibrary()
-	do $$$AssertStatusOK(st, "Free test library")
+		set argTypes = ##class(%ListOfDataTypes).%New()
+		set structType = ##class(%ListOfDataTypes).%New()
+		do structType.Insert(cna.#SCHAR)
+		do structType.Insert(cna.#INT64)
+		do structType.Insert(cna.#SCHAR)
+		do argTypes.Insert(structType)
+		
+		set structVal = ##class(%ListOfDataTypes).%New()
+		do structVal.Insert(12)
+		do structVal.Insert(2114)
+		do structVal.Insert(74)
+		
+		set retVal = cna.CallFunction("sum_st", cna.#INT64, argTypes, structVal)
+		do $$$AssertEquals(retVal, 2200, "Check return value of sum_st()")
+		
+		
+		do argTypes.Clear()
+		set retVal = cna.CallFunction("create_st", structType, argTypes)
+		do $$$AssertEquals(retVal.GetAt(1), 1, "Check return value of create_st()")
+		do $$$AssertEquals(retVal.GetAt(2), 2, "Check return value of create_st()")
+		do $$$AssertEquals(retVal.GetAt(3), 3, "Check return value of create_st()")
+		
+		
+		set nestedType = ##class(%ListOfDataTypes).%New()
+		do nestedType.Insert(cna.#SCHAR)
+		do nestedType.Insert(cna.#INT64)
+		do nestedType.Insert(cna.#SCHAR)
+		
+		do structType.Clear()
+		do structType.Insert(cna.#SCHAR)
+		do structType.Insert(nestedType)
+		do structType.Insert(cna.#SCHAR)
+		
+		do argTypes.Clear()
+		do argTypes.Insert(structType)
+		
+		set nestedVal = ##class(%ListOfDataTypes).%New()
+		do nestedVal.Insert(-14)
+		do nestedVal.Insert(33100)
+		do nestedVal.Insert(28)
+		
+		do structVal.Clear()
+		do structVal.Insert(12)
+		do structVal.Insert(nestedVal)
+		do structVal.Insert(74)
+		
+		
+		
+		set retVal = cna.CallFunction("sum_nested", cna.#INT64, argTypes, structVal)
+		do $$$AssertEquals(retVal, 33200, "Check return value of sum_nested()")
+		
+			
+		do cna.FreeLibrary()
+	}catch ex {
+		do cna.FreeLibrary()
+		do $$$AssertEquals(0, 1, $system.Status.GetErrorText(ex.AsStatus()))
+	}
 ]]></Implementation>
 </Method>
 
 <Method name="TestFloatingPoint">
 <Implementation><![CDATA[
-	set cna = ##class(CNA.CNA).%New(..CNAPath)
-	set st = cna.LoadLibrary(..testLib)
-	do $$$AssertStatusOK(st, "Load test library")
-	
-	set argTypes = ##class(%ListOfDataTypes).%New()
-	do argTypes.Insert(cna.#FLOAT)
-	do argTypes.Insert(cna.#FLOAT)
-	set st = cna.CallFunction("sum_float", cna.#FLOAT, .retVal, argTypes, $double(0.2), $double(1.5))
-	do $$$AssertStatusOK(st, "Call sum_float() from test library")
-	do $$$AssertEquals($zabs(retVal - $double(1.7)) < $double(0.0000001), 1, "Check return value of sum_float()")
-	
-	if ($SYSTEM.Version.GetOS() = "UNIX") {
-		do argTypes.Clear()
-		do argTypes.Insert(cna.#LONGDOUBLE)
-		do argTypes.Insert(cna.#LONGDOUBLE)
-		set st = cna.CallFunction("sum_long_double", cna.#LONGDOUBLE, .retVal, argTypes, $double(0.2), $double(1.5))
-		do $$$AssertStatusOK(st, "Call sum_long_double() from test library")
-		do $$$AssertEquals(retVal, $double(1.7), "Check return value of sum_long_double()")
+	try {
+		set cna = ##class(CNA.CNA).%New(..CNAPath)
+		do cna.LoadLibrary(..testLib)
+		
+		set argTypes = ##class(%ListOfDataTypes).%New()
+		do argTypes.Insert(cna.#FLOAT)
+		do argTypes.Insert(cna.#FLOAT)
+		set retVal = cna.CallFunction("sum_float", cna.#FLOAT, argTypes, $double(0.2), $double(1.5))
+		do $$$AssertEquals($zabs(retVal - $double(1.7)) < $double(0.0000001), 1, "Check return value of sum_float()")
+		
+		if ($SYSTEM.Version.GetOS() = "UNIX") {
+			do argTypes.Clear()
+			do argTypes.Insert(cna.#LONGDOUBLE)
+			do argTypes.Insert(cna.#LONGDOUBLE)
+			set retVal = cna.CallFunction("sum_long_double", cna.#LONGDOUBLE, argTypes, $double(0.2), $double(1.5))
+			do $$$AssertEquals(retVal, $double(1.7), "Check return value of sum_long_double()")
+		}
+		
+		do cna.FreeLibrary()
+	}catch ex {
+		do cna.FreeLibrary()
+		do $$$AssertEquals(0, 1, $system.Status.GetErrorText(ex.AsStatus()))
 	}
-	
-	set st = cna.FreeLibrary()
-	do $$$AssertStatusOK(st, "Free test library")
 ]]></Implementation>
 </Method>
 
 <Method name="TestStreams">
 <Implementation><![CDATA[
-
-	set cna = ##class(CNA.CNA).%New(..CNAPath)
-	set st = cna.LoadLibrary(..testLib)
-	do $$$AssertStatusOK(st, "Load test library")
-	
-	set file = ##class(%Stream.FileBinary).%New()
-	
-	do file.LinkToFile(..Ulysses)
-	
-	set st = cna.ConvertStreamToPointer(file, .pointer)
-	do $$$AssertStatusOK(st, "Convert Ulysses to pointer")
-	
-	set st = cna.ConvertStringToPointer(..Ulysses, .path)
-	do $$$AssertStatusOK(st, "Convert Ulysses path to pointer")
+	try {
+		set cna = ##class(CNA.CNA).%New(..CNAPath)
+		do cna.LoadLibrary(..testLib)
 		
-	set argTypes = ##class(%ListOfDataTypes).%New()
-	do argTypes.Insert(cna.#POINTER)
-	do argTypes.Insert(cna.#POINTER)
-	
-	set st = cna.CallFunction("compare_string_and_ulysses", cna.#INT, .retVal, argTypes, pointer, path)
-	do $$$AssertStatusOK(st, "Call comparing Ulysses and stream")
-	do $$$AssertEquals(retVal, 1, "Check retval")
-	
-	set st = cna.FreeLibrary()
-	do $$$AssertStatusOK(st, "Free test library")
+		set file = ##class(%Stream.FileBinary).%New()	
+		do file.LinkToFile(..Ulysses)
+		
+		set pointer = cna.ConvertStreamToPointer(file)
+		set path = cna.ConvertStringToPointer(..Ulysses)
+			
+		set argTypes = ##class(%ListOfDataTypes).%New()
+		do argTypes.Insert(cna.#POINTER)
+		do argTypes.Insert(cna.#POINTER)
+		
+		set retVal = cna.CallFunction("compare_string_and_ulysses", cna.#INT, argTypes, pointer, path)
+		do $$$AssertEquals(retVal, 1, "Check retval")
+		
+		do cna.FreeLibrary()
+	}catch ex {
+		do cna.FreeLibrary()
+		do $$$AssertEquals(0, 1, $system.Status.GetErrorText(ex.AsStatus()))
+	}
 ]]></Implementation>
 </Method>
 
