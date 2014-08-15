@@ -375,6 +375,19 @@ string_to_pointer(char *s, ZARRAYP p)
 }
 
 int
+pointer_to_string(ZARRAYP p, char *s)
+{
+  void *array;
+  if (p->len != sizeof(void *)) {
+    logger("Wrong size of ZARRAY 'pointer'\n");
+    return ZF_FAILURE;
+  }
+  assign_ZARRAYP_to_pointer(&array, p);
+  strcpy(s, array);
+  return ZF_SUCCESS;
+}
+
+int
 free_pointer(ZARRAYP p)
 {
   void *s;
@@ -487,6 +500,7 @@ ZFENTRY("load_library", "cB", load_library)
 ZFENTRY("free_library", "b", free_library)
 
 ZFENTRY("string_to_pointer", "cB", string_to_pointer)
+ZFENTRY("pointer_to_string", "bC", pointer_to_string)
 ZFENTRY("append_to_pointer", "bbcB", append_to_pointer)
 ZFENTRY("free_pointer", "b", free_pointer)
 ZFENTRY("pointer_set_at", "bbbb", pointer_set_at)

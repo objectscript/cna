@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2014.1.1 (Build 702U)" ts="2014-08-07 19:08:37">
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2014.1.1 (Build 702U)" ts="2014-08-15 12:38:28">
 <Class name="CNA.CNA">
 <Super>%RegisteredObject</Super>
-<TimeChanged>63404,42338.761878</TimeChanged>
+<TimeChanged>63414,44790.948906</TimeChanged>
 <TimeCreated>63383,58144.669569</TimeCreated>
 
 <Property name="LibId">
@@ -519,7 +519,7 @@ Loads dynamic library with path <var>path</var> to CNA.]]></Description>
 Releases loaded dynamic library from CNA.</Description>
 <Implementation><![CDATA[
 	set freeLib = $zf(-4, 3, ..CNAId, "free_library")
-	do $zf(-5, ..CNAId, freeLib, ..LibId)	
+	do $zf(-5, ..CNAId, freeLib, ..LibId)
 ]]></Implementation>
 </Method>
 
@@ -608,10 +608,20 @@ Converts Cache string to C array and returns a <var>pointer</var> to the beginni
 <FormalSpec>string:%String</FormalSpec>
 <ReturnType>%String</ReturnType>
 <Implementation><![CDATA[
-		set s2p = $zf(-4, 3, ..CNAId, "string_to_pointer")
-		set pointer = $zf(-5, ..CNAId, s2p, string)
-		do ..AllocatedMemory.Insert(pointer)
-		return pointer
+	set s2p = $zf(-4, 3, ..CNAId, "string_to_pointer")
+	set pointer = $zf(-5, ..CNAId, s2p, string)
+	do ..AllocatedMemory.Insert(pointer)
+	return pointer
+]]></Implementation>
+</Method>
+
+<Method name="ConvertPointerToString">
+<FormalSpec>pointer:%String</FormalSpec>
+<ReturnType>%String</ReturnType>
+<Implementation><![CDATA[
+	set p2s = $zf(-4, 3, ..CNAId, "pointer_to_string")
+	set string = $zf(-5, ..CNAId, p2s, pointer)
+	return string
 ]]></Implementation>
 </Method>
 
