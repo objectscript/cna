@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2014.1.1 (Build 702U)" ts="2014-08-15 12:38:28">
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2014.1.1 (Build 702U)" ts="2014-08-15 17:17:19">
 <Class name="CNA.CNA">
 <Super>%RegisteredObject</Super>
-<TimeChanged>63414,44790.948906</TimeChanged>
+<TimeChanged>63414,62093.250352</TimeChanged>
 <TimeCreated>63383,58144.669569</TimeCreated>
 
 <Property name="LibId">
@@ -604,24 +604,26 @@ Assigns <var>value</var> to array element with index <var>index</var>.
 
 <Method name="ConvertStringToPointer">
 <Description><![CDATA[
-Converts Cache string to C array and returns a <var>pointer</var> to the beginning of this array.]]></Description>
+Converts Cache string to C array (with UTF8 encoding) and returns a <var>pointer</var> to the beginning of this array.]]></Description>
 <FormalSpec>string:%String</FormalSpec>
 <ReturnType>%String</ReturnType>
 <Implementation><![CDATA[
 	set s2p = $zf(-4, 3, ..CNAId, "string_to_pointer")
-	set pointer = $zf(-5, ..CNAId, s2p, string)
+	set pointer = $zf(-5, ..CNAId, s2p, $ZCVT(string, "O", "UTF8"))
 	do ..AllocatedMemory.Insert(pointer)
 	return pointer
 ]]></Implementation>
 </Method>
 
 <Method name="ConvertPointerToString">
+<Description>
+Converts UTF8 C-string to Cache string</Description>
 <FormalSpec>pointer:%String</FormalSpec>
 <ReturnType>%String</ReturnType>
 <Implementation><![CDATA[
 	set p2s = $zf(-4, 3, ..CNAId, "pointer_to_string")
 	set string = $zf(-5, ..CNAId, p2s, pointer)
-	return string
+	return $ZCVT(string, "I", "UTF8")
 ]]></Implementation>
 </Method>
 

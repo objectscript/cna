@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2014.1.1 (Build 702U)" ts="2014-08-15 12:38:28">
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2014.1.1 (Build 702U)" ts="2014-08-15 17:17:19">
 <Class name="CNA.Tests">
 <Super>%UnitTest.TestCase</Super>
-<TimeChanged>63414,45393.801711</TimeChanged>
+<TimeChanged>63414,62233.33017</TimeChanged>
 <TimeCreated>63384,43091.390095</TimeCreated>
 
 <Property name="CNAPath">
@@ -110,44 +110,6 @@
 		set retVal = cna.CallFunction("five", cna.#INT, argTypes)
 		do $$$AssertEquals(retVal, 5, "Check return value of five()")
 
-		do cna.FreeLibrary()
-	}catch ex {
-		do cna.FreeLibrary()
-		do $$$AssertEquals(0, 1, $system.Status.GetErrorText(ex.AsStatus()))
-	}
-]]></Implementation>
-</Method>
-
-<Method name="TestHunspell">
-<Implementation><![CDATA[
-	try {
-		if ($SYSTEM.Version.GetOS() = "UNIX") {
-			//Not implemented yet
-			return $$$OK
-		} 
-		
-		
-		set cna = ##class(CNA.CNA).%New(..CNAPath)
-		do cna.LoadLibrary(..Hunspell)
-		
-		set aff = cna.ConvertStringToPointer(..HunspellAff)
-		set dic = cna.ConvertStringToPointer(..HunspellDic)
-		
-		set argTypes = ##class(%ListOfDataTypes).%New()
-		do argTypes.Insert(cna.#POINTER)
-		do argTypes.Insert(cna.#POINTER)
-		
-		set hunspell =  cna.CallFunction("Hunspell_create", cna.#POINTER, argTypes, aff, dic)
-		
-		set bad  =  cna.ConvertStringToPointer($ZCVT("лымузин", "O", "UTF8"))
-		set good =  cna.ConvertStringToPointer($ZCVT("лимузин", "O", "UTF8"))
-		
-		set retVal =  cna.CallFunction("Hunspell_spell", cna.#UINT, argTypes, hunspell, bad)
-		do $$$AssertEquals(retVal, 0, "Incorrect word")
-		
-		set retVal =  cna.CallFunction("Hunspell_spell", cna.#UINT, argTypes, hunspell, good)
-		do $$$AssertNotEquals(retVal, 0, "Correct word")
-		
 		do cna.FreeLibrary()
 	}catch ex {
 		do cna.FreeLibrary()
@@ -385,24 +347,6 @@
 </Method>
 
 <Method name="OnBeforeAllTests">
-<Description><![CDATA[
-Run by <B>RunTest</B> once <a href="#OnBeforeAll">before any test methods</a> in the test class are run. Can be used to set up a 
-test environment that will be later cleaned up by <B>OnAfterAllTests</B>. 
-<br><br>Example: Setup and Cleanup of an environment: 
-<pre>
-Method OnBeforeAllTests() As %Status
-{
-	//do setup stuff here
- 	set ^inputMessage = "input message"
-	quit $$$OK
-}
-Method OnAfterAllTests() As %Status
-{
-	//do clean up stuff here
-	kill ^inputMessage
-	quit $$$OK
-}</pre>
-]]></Description>
 <ReturnType>%Status</ReturnType>
 <Implementation><![CDATA[
 	if ($SYSTEM.Version.GetOS() = "UNIX") {
