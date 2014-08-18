@@ -16,7 +16,7 @@ export GLOBALS_HOME='путь к корневой папке Caché'
 ```
 3. Готово! Нужный нам файл — libcna.so. Осталось только импортировать класс cna.xml в любую удобную область Caché:
 
-```M
+```mumps
 do $system.OBJ.Load("путь к cna.xml", "c")
 ```
 
@@ -28,7 +28,7 @@ do $system.OBJ.Load("путь к cna.xml", "c")
 
 Для запуска тестов необходима тестовая библиотека libtest. Если вы собирали libcna сами, то она уже лежит где надо. Если нет — необходимо поместить ее в папку `tests/`, рядом с libcna. Далее, присваиваем глобалу `^UnitTestRoot` нужное значение и запускаем тесты: 
 
-```M
+```mumps
 set ^UnitTestRoot="путь к папке с libcna"  
 do ##class(%UnitTest.Manager).RunTest()
 ```
@@ -43,7 +43,7 @@ unsigned int cstrlen(const char *s);
 
 Которая возвращает длину строки. Посмотрим, что нужно сделать, чтобы вызвать ее из Caché:
 
-```M
+```mumps
 set cna = ##class(CNA.CNA).%New("путь к libcna") // Создаем объект класса CNA.CNA. В аргументах указываем путь к libcna.dll или libcna.so
 do cna.LoadLibrary("путь к libtest")             // Загружаем библиотеку libtest в CNA
 
