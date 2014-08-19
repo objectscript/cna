@@ -7,8 +7,9 @@
 # Libraries
 *.lib
 *.la
-*.a
 *.lo
+*.a
+!libs/*/libffi.a
 
 # Shared objects (inc. Windows DLLs)
 *.dll

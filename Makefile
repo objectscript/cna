@@ -1,7 +1,7 @@
 CC = gcc
 RM = rm
 
-CFLAGS = -Wall -g -Wextra -m64 -fpic
+CFLAGS = -Wall -Wextra -fpic -O2 -fno-strict-aliasing
 
 SYS := $(shell gcc -dumpmachine)
 ifneq (, $(findstring linux, $(SYS)))
@@ -15,11 +15,15 @@ ifneq (, $(findstring linux, $(SYS)))
 	endif
 
 else ifneq (, $(findstring mingw, $(SYS)))
-	
+	ifneq (, $(findstring x86_64, $(SYS)))
+		PLATFORM = x86-64
+	else 
+		PLATFORM = x86-32
+	endif
 	SUFFIX = dll
 	LDFLAGS = -mdll
-	LIBS = -L./libs -lffi
-	CFLAGS += -I./libs/include
+	LIBS = -L./libs/$(PLATFORM)/ -lffi
+	CFLAGS += -I./libs/$(PLATFORM)/include/
 	ifndef GLOBALS_HOME
 		GLOBALS_HOME = C:/InterSystems/Cache
 	endif

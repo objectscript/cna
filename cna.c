@@ -28,33 +28,35 @@
   #define FIND_ENTRY(HANDLE, NAME) dlsym(HANDLE, NAME)
 #endif /* _WIN32 */
 
-void
+inline void
 logger(const char *format, ...)
 {
-  va_list args;
-  va_start(args, format);
-  
-  #ifdef _WIN32
-    char path[MAX_PATH];
-    HMODULE hm;
-    GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, (LPCSTR) &logger, &hm);
-    GetModuleFileNameA(hm, path, sizeof(path));
-    strcpy(strrchr(path, '\\') + 1, "log.txt");
+  #ifdef DEBUG
+    va_list args;
+    va_start(args, format);
+    
+    #ifdef _WIN32
+      char path[MAX_PATH];
+      HMODULE hm;
+      GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, (LPCSTR) &logger, &hm);
+      GetModuleFileNameA(hm, path, sizeof(path));
+      strcpy(strrchr(path, '\\') + 1, "log.txt");
 
-    FILE *fd = fopen(path, "a");
-    if (!fd) {
-      return;
-    }
-    time_t now;
-    time(&now);
-    fprintf(fd, "%s\t", ctime(&now));
-    vfprintf(fd, format, args);
-    fclose(fd);
-  #else
-    vprintf(format, args);
-  #endif /* _WIN32 */
-  
-  va_end(args);
+      FILE *fd = fopen(path, "a");
+      if (!fd) {
+        return;
+      }
+      time_t now;
+      time(&now);
+      fprintf(fd, "%s\t", ctime(&now));
+      vfprintf(fd, format, args);
+      fclose(fd);
+    #else
+      vprintf(format, args);
+    #endif /* _WIN32 */
+    
+    va_end(args);
+  #endif /* DEBUG */
 }
 
 
@@ -302,7 +304,7 @@ call_function(ZARRAYP libID, const char *funcname, ZARRAYP argtypes, ZARRAYP arg
   void *ffi_values[maxargs];
 
   int i, j;
-  size_t fullsize = 0, size;
+  size_t fullsize = 0, size = 0;
   storage mem;
   init_storage(&mem);
 
