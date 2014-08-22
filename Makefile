@@ -1,7 +1,7 @@
 CC = gcc
 RM = rm
 
-CFLAGS = -Wall -Wextra -fpic -O2 -fno-strict-aliasing
+CFLAGS = -Wall -Wextra -fpic -O2 -fno-strict-aliasing -Wno-unused-parameter
 
 SYS := $(shell gcc -dumpmachine)
 ifneq (, $(findstring linux, $(SYS)))
