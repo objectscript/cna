@@ -63,7 +63,7 @@
 <FormalSpec>path:%String</FormalSpec>
 <Implementation><![CDATA[
 	try {
-		set prev = gd.NULL
+		set prev = ..gd.NULL
 
 		set argTypes = ##class(%ListOfDataTypes).%New()
 		do argTypes.Insert(..libc.#POINTER)
@@ -73,7 +73,7 @@
 		set pMode = ..libc.ConvertStringToPointer("wb")
 
 		set out = ..libc.CallFunction("fopen", ..libc.#POINTER, argTypes, pPath, pMode)
-		if (out = libc.NULL) {
+		if (out = ..libc.NULL) {
 			write "Can't open file " _ path _ "for writing", !
 			return
 		}
@@ -127,7 +127,7 @@
 			do argTypes.Insert(..gd.#POINTER)
 			do ..gd.CallFunction("gdImageGifAnimAdd", ..gd.#VOID, argTypes, im, out, 1, 0, 0, 10, 1, prev)
 			
-			if (prev '= gd.NULL) {
+			if (prev '= ..gd.NULL) {
 				do argTypes.Clear()
 				do argTypes.Insert(..gd.#POINTER) 
 				do ..gd.CallFunction("gdImageDestroy", ..gd.#VOID, argTypes, prev)
@@ -160,7 +160,7 @@
 		do argTypes.Insert(..libc.#POINTER)
 
 		set fd = ..libc.CallFunction("fopen", ..libc.#POINTER, argTypes, pPath, rb)
-		if (fd = libc.NULL) {
+		if (fd = ..libc.NULL) {
 			write "Can't open file " _ path _ "for reading", !
 			return
 		}
@@ -168,7 +168,7 @@
 		do argTypes.Clear()
 		do argTypes.Insert(..gd.#POINTER)
 		set im = ..gd.CallFunction("gdImageCreateFromPng", ..gd.#POINTER, argTypes, fd)
-		if (im = gd.NULL) {
+		if (im = ..gd.NULL) {
 			write "Can't open png " _ path _ ". File may be corrupt or it does not contain PNG image", !
 			return
 		}
@@ -198,7 +198,7 @@
 		
 		do argTypes.Insert(..libc.#POINTER)
 		set fd = ..libc.CallFunction("fopen", ..libc.#POINTER, argTypes, out, wb)
-		if (fd = libc.NULL) {
+		if (fd = ..libc.NULL) {
 			write "Can't open file " _ saveTo _ "for writing", !
 			return
 		}
