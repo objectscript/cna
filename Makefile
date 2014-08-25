@@ -6,8 +6,16 @@ MAKE := make
 CFLAGS += -Wall -Wextra -fpic -O2 -fno-strict-aliasing -Wno-unused-parameter
 
 SYS := $(shell gcc -dumpmachine)
-LIBFFI_PATH := ./libs/libffi/$(SYS)
-INCLUDES := -I$(LIBFFI_PATH)/include
+LIBFFI_PATH := ./libs/libffi
+
+ifeq ($(SYS), x86_64-w64-mingw32)
+	BUILDSYS := $(SYS)
+else
+	BUILDSYS := $(shell bash $(LIBFFI_PATH)/config.guess)
+endif
+
+LIBFFI_PATH := $(LIBFFI_PATH)/$(BUILDSYS)
+INCLUDES :=-I$(LIBFFI_PATH)/include
 LIBS := -L$(LIBFFI_PATH)/.libs -lffi
 
 ifneq (, $(findstring linux, $(SYS)))
@@ -15,9 +23,8 @@ ifneq (, $(findstring linux, $(SYS)))
 	LDFLAGS := -shared
 	LIBS += -ldl
 else ifneq (, $(findstring mingw, $(SYS)))
-	SUFFIX = dll
-	LDFLAGS = -mdll
-	CFLAGS += -I./libs/$(PLATFORM)/include/
+	SUFFIX := dll
+	LDFLAGS := -mdll
 else 
 	$(error Unsupported build platform)
 endif
@@ -32,12 +39,12 @@ INCLUDES += -I${GLOBALS_HOME}/dev/cpp/include
 CFLAGS += $(INCLUDES)
 TESTSDIR := tests
 
-.PHONY: all clean libffi libffi_clean
+.PHONY: all clean libffi libffi-clean
 
 all: libcna.$(SUFFIX) $(TESTSDIR)/libtest.$(SUFFIX)	
 
 libffi: 
-	cd libs/libffi && ./configure --build=$(SYS) --enable-shared=no && $(MAKE)
+	cd libs/libffi && ./configure --build=$(BUILDSYS) --enable-shared=no && $(MAKE)
 
 cna.o: cna.c storage.h
 
