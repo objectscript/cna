@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2014.1.1 (Build 702U)" ts="2014-08-15 17:17:19">
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2014.1.1 (Build 702U)" ts="2014-08-25 11:51:29">
 <Class name="CNA.CNA">
 <Super>%RegisteredObject</Super>
-<TimeChanged>63414,62093.250352</TimeChanged>
+<TimeChanged>63424,42665.798282</TimeChanged>
 <TimeCreated>63383,58144.669569</TimeCreated>
 
 <Property name="LibId">
@@ -194,10 +194,11 @@ Number of all available types in CNA.</Description>
 	
 	set aligns = ""
 	for i=0:1:(..#NTYPES - 2) {
-		if (((i = ..#DOUBLE) || (i = ..#LONGDOUBLE)) && (os = "UNIX") && ($find(platform,"x86-32") '= 0)) {
+		set size = $ASCII(..TypeSizes, i + 1)
+		if ((size > 4) && (os = "UNIX") && ($find(platform,"x86-32") '= 0)) {
 			set aligns = aligns _ $CHAR(4)
 		} else {
-			set aligns = aligns _ $CHAR($ASCII(..TypeSizes, i + 1))
+			set aligns = aligns _ $CHAR(size)
 		} 
 	}
 	return aligns
