@@ -9,7 +9,6 @@
 *.la
 *.lo
 *.a
-!libs/*/libffi.a
 
 # Shared objects (inc. Windows DLLs)
 *.dll
