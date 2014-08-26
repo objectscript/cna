@@ -1,43 +1,50 @@
-CC = gcc
-RM = rm
+CC := gcc
+RM := rm
+CD := cd
+MAKE := make
 
-CFLAGS = -Wall -Wextra -fpic -O2 -fno-strict-aliasing -Wno-unused-parameter
+CFLAGS += -Wall -Wextra -fpic -O2 -fno-strict-aliasing -Wno-unused-parameter
 
 SYS := $(shell gcc -dumpmachine)
+LIBFFI_PATH := ./libs/libffi
+
+ifeq ($(SYS), x86_64-w64-mingw32)
+	BUILDSYS := $(SYS)
+else
+	BUILDSYS := $(shell bash $(LIBFFI_PATH)/config.guess)
+endif
+
+LIBFFI_PATH := $(LIBFFI_PATH)/$(BUILDSYS)
+INCLUDES :=-I$(LIBFFI_PATH)/include
+LIBS := -L$(LIBFFI_PATH)/.libs -lffi
+
 ifneq (, $(findstring linux, $(SYS)))
-	
-	SUFFIX = so
-	LDFLAGS = -shared
-	LIBS = -ldl -lffi
-	CFLAGS += -I/usr/local/lib/libffi-3.1/include/
-	ifndef GLOBALS_HOME
-		$(error Couldn't find GLOBALS_HOME)
-	endif
-
+	SUFFIX := so
+	LDFLAGS := -shared
+	LIBS += -ldl
 else ifneq (, $(findstring mingw, $(SYS)))
-	ifneq (, $(findstring x86_64, $(SYS)))
-		PLATFORM = x86-64
-	else 
-		PLATFORM = x86-32
-	endif
-	SUFFIX = dll
-	LDFLAGS = -mdll
-	LIBS = -L./libs/$(PLATFORM)/ -lffi
-	CFLAGS += -I./libs/$(PLATFORM)/include/
-	ifndef GLOBALS_HOME
-		GLOBALS_HOME = C:/InterSystems/Cache
-	endif
-
+	SUFFIX := dll
+	LDFLAGS := -mdll
 else 
 	$(error Unsupported build platform)
 endif
 
-CFLAGS += -I${GLOBALS_HOME}/dev/cpp/include
 
-TESTSDIR = tests
+ifndef GLOBALS_HOME
+    $(error Couldn't find GLOBALS_HOME)
+endif
 
 
-all: libcna.$(SUFFIX) $(TESTSDIR)/libtest.$(SUFFIX)
+INCLUDES += -I${GLOBALS_HOME}/dev/cpp/include
+CFLAGS += $(INCLUDES)
+TESTSDIR := tests
+
+.PHONY: all clean libffi libffi-clean
+
+all: libcna.$(SUFFIX) $(TESTSDIR)/libtest.$(SUFFIX)	
+
+libffi: 
+	cd libs/libffi && ./configure --build=$(BUILDSYS) --enable-shared=no && $(MAKE)
 
 cna.o: cna.c storage.h
 
@@ -50,6 +57,9 @@ $(TESTSDIR)/teslib.o: $(TESTSDIR)/testlib.c
 
 $(TESTSDIR)/libtest.$(SUFFIX): $(TESTSDIR)/testlib.o
 	$(CC) $(LDFLAGS) -o $@ $^
+
+libffi-clean:
+	$(CD) libs/libffi && $(MAKE) clean
 
 clean:
 	$(RM) *.$(SUFFIX) *.o $(TESTSDIR)/*.$(SUFFIX) $(TESTSDIR)/*.o
