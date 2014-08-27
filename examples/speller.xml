@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2014.1.1 (Build 702U)" ts="2014-08-18 15:56:38">
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2014.1.1 (Build 702U)" ts="2014-08-27 16:08:01">
 <Class name="CNA.Examples.Speller">
 <StorageStrategy/>
 <Super>%RegisteredObject</Super>
-<TimeChanged>63417,57316.062806</TimeChanged>
+<TimeChanged>63426,57454.675906</TimeChanged>
 <TimeCreated>63414,42098.211762</TimeCreated>
 
 <Property name="CNA">
@@ -61,7 +61,6 @@
 	}
 	
 	Quit $$$OK
-
 ]]></Implementation>
 </Method>
 
@@ -81,18 +80,12 @@
 		return ex.AsStatus()
 	}
 	Quit $$$OK
-
 ]]></Implementation>
 </Method>
 
-<UDLText name="T">
-<Content><![CDATA[
-// True - correct word, false - incorrect word
-
-]]></Content>
-</UDLText>
-
 <Method name="Spell">
+<Description>
+True - correct word, false - incorrect word</Description>
 <FormalSpec>word:%String</FormalSpec>
 <ReturnType>%Boolean</ReturnType>
 <Implementation><![CDATA[
@@ -102,7 +95,6 @@
 	do argTypes.Insert(..CNA.#POINTER)
 	set res = ..CNA.CallFunction("Hunspell_spell", ..CNA.#INT, argTypes, ..Hunspell, pWord)
 	return res
-
 ]]></Implementation>
 </Method>
 
@@ -135,61 +127,72 @@
 	do ..LibC.CallFunction("free", ..LibC.#VOID, argTypes, pArray)
 	
 	return suggestions
+]]></Implementation>
+</Method>
 
+<Method name="CheckRuString">
+<FormalSpec>str:%String</FormalSpec>
+<ReturnType>%Integer</ReturnType>
+<Implementation><![CDATA[
+	set translated = $TRANSLATE(str, ",\/=*:", "      ")
+	set stripped =  $ZSTRIP(translated, "*E", "", " -йцукеёнгшщзхъфывапролджэячсмитьбюЙЦУКЕЁНГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮ")
+	set list = $LFS(stripped, " ")
+						
+	set ptr = 0
+	set count = 0
+	while $LISTNEXT(list, ptr, value) {
+		set word = $ZSTRIP(value, "<>W", "-")
+		if (word '= "") {
+			if (..Spell(word) = 0) {
+				set count = count + 1
+				w word, " "
+			}
+		}			
+	}
+	if (count > 0) {
+		w ?90, "<< """ _ str _ """", !	
+	}
+	return count
 ]]></Implementation>
 </Method>
 
 <Method name="CheckLocalization">
+<FormalSpec>global="^CacheMsg",file="mistakes.txt"</FormalSpec>
+<ReturnType>%Integer</ReturnType>
 <Implementation><![CDATA[
 	set key = ""
 	set count = 0
-	open "mistakes.txt":"NWS":5
-	use "mistakes.txt"
+	open file:"NWS":5
+	use file
 	while(1) {
-		set key = $ORDER(^%qCacheMsg(key))
+		set key = $ORDER(@global@(key))
 		if (key = "") {
 			quit
 		}
-		if ($data(^%qCacheMsg(key, "ru"))) {
+		if ($data(@global@(key, "ru"))) {
 			set nestedKey = ""
 			do {
-				set nestedKey = $ORDER(^%qCacheMsg(key, "ru", nestedKey))
+				set nestedKey = $ORDER(@global@(key, "ru", nestedKey))
 				if (nestedKey = "") { 
 					quit
 				}
-				set str =  ^%qCacheMsg(key, "ru", nestedKey)
-				
-				set translated = $TRANSLATE(str, ",\/=*:", "      ")
-				set stripped =  $ZSTRIP(translated, "*E", "", " -йцукеёнгшщзхъфывапролджэячсмитьбюЙЦУКЕЁНГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮ")
-				set list = $LFS(stripped, " ")
-				
-				
-				
-				set ptr = 0
-				set flag = 0
-				while $LISTNEXT(list, ptr, value) {
-					set word = $ZSTRIP(value, "<>W", "-")
-					if (word '= "") {
-						if (..Spell(word) = 0) {
-							if (flag = 0) {
-								w !, "Ошибки:"
-								set flag = 1
-								set count = count + 1
-							}
-							w " " _ word
-						}
-					}			
-				}
-				if (flag) {
-					w !, $ZR _ " = """ _ str _ """", !	
-				}
+				set str =  @global@(key, "ru", nestedKey)
+				set count = count + ..CheckRuString(str)
+
 				
 			} while (nestedKey '= "")
 		}
 	}
+	
 	w !, "Ошибок - " _ count, !
-	close "mistakes.txt"
+	close file
+	return count
+]]></Implementation>
+</Method>
 
+<Method name="CheckSystemLocalization">
+<ReturnType>%Integer</ReturnType>
+<Implementation><![CDATA[	return ..CheckLocalization("^%qCacheMsg")
 ]]></Implementation>
 </Method>
 </Class>
