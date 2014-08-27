@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2014.1.1 (Build 702U)" ts="2014-08-25 11:51:29">
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2014.1.1 (Build 702U)" ts="2014-08-27 18:28:19">
 <Class name="CNA.CNA">
 <Super>%RegisteredObject</Super>
-<TimeChanged>63424,42665.798282</TimeChanged>
+<TimeChanged>63426,66283.9796</TimeChanged>
 <TimeCreated>63383,58144.669569</TimeCreated>
 
 <Property name="LibId">
@@ -157,13 +157,14 @@ Number of all available types in CNA.</Description>
 
 <Method name="CreateStructType">
 <ClassMethod>1</ClassMethod>
-<FormalSpec>types:%ListOfDataTypes</FormalSpec>
+<FormalSpec>types:%List</FormalSpec>
 <Private>1</Private>
 <ReturnType>%String</ReturnType>
 <Implementation><![CDATA[
-	set structType = $CHAR(..#STRUCT, types.Size)
-	for i=1:1:types.Size {
-		set type = types.GetAt(i)
+	set size = $LISTLENGTH(types)
+	set structType = $CHAR(..#STRUCT, size)
+	for i=1:1:size {
+		set type = $LIST(types, i)
 		set structType = structType _ ..ConvertTypeFromCacheToCNA(type)
 	}
 	
@@ -177,7 +178,7 @@ Number of all available types in CNA.</Description>
 <Private>1</Private>
 <ReturnType>%String</ReturnType>
 <Implementation><![CDATA[
-	if ($ISOBJECT(type)) {
+	if ($LISTVALID(type)) {
 		return ..CreateStructType(type)	
 	} else {
 		return $CHAR(type)
@@ -223,11 +224,11 @@ Number of all available types in CNA.</Description>
 <FormalSpec>type,*size:%Integer,*alignment:%Integer</FormalSpec>
 <Private>1</Private>
 <Implementation><![CDATA[
-	if ($ISOBJECT(type)) {
+	if ($LISTVALID(type)) {
 		set alignment = 0
 		set offset = 0
-		for i=1:1:type.Size {
-			do ..GetSizeAndAlignment(type.GetAt(i), .elemSize, .elemAlign)
+		for i=1:1:$LISTLENGTH(type) {
+			do ..GetSizeAndAlignment($LIST(type, i), .elemSize, .elemAlign)
 			if (elemAlign > alignment) {
 				set alignment = elemAlign	
 			}
@@ -257,7 +258,7 @@ Number of all available types in CNA.</Description>
 </Method>
 
 <Method name="ConvertStructFromCacheToCNA">
-<FormalSpec>type:%ListOfDataTypes,values:%ListOfDataTypes</FormalSpec>
+<FormalSpec>type:%List,values:%List</FormalSpec>
 <Private>1</Private>
 <ReturnType>%String</ReturnType>
 <Implementation><![CDATA[
@@ -267,8 +268,8 @@ Number of all available types in CNA.</Description>
 	set maxAlign = 0
 	set offset = 0
 	
-	for i=1:1:values.Size {
-		set elemType = type.GetAt(i)
+	for i=1:1:$LISTLENGTH(values) {
+		set elemType = $LIST(type, i)
 		do ..GetSizeAndAlignment(elemType, .elemSize, .elemAlign)
 		
 		if (elemAlign > maxAlign) {
@@ -278,7 +279,7 @@ Number of all available types in CNA.</Description>
 		do ..ApplyAlignment(.struct, .offset, elemAlign)
 		
 		set offset = offset + elemSize
-		set struct = struct _ ..ConvertFromCacheToCNA(elemType, values.GetAt(i))
+		set struct = struct _ ..ConvertFromCacheToCNA(elemType, $LIST(values, i))
 	}
 	
 	do ..ApplyAlignment(.struct, .offset, maxAlign)
@@ -288,15 +289,15 @@ Number of all available types in CNA.</Description>
 </Method>
 
 <Method name="ConvertStructFromCNAToCache">
-<FormalSpec>type:%String,struct:%String</FormalSpec>
+<FormalSpec>type:%List,struct:%String</FormalSpec>
 <Private>1</Private>
 <ReturnType>%ListOfDataTypes</ReturnType>
 <Implementation><![CDATA[
 	set aligns = ..GetAlignments()
 	set values = ##class(%ListOfDataTypes).%New()
 	set offset = 0
-	for i=1:1:type.Size {
-		set elemType = type.GetAt(i)
+	for i=1:1:$LISTLENGTH(type) {
+		set elemType = $LIST(type, i)
 		set elemSize = $ASCII(..TypeSizes, elemType + 1)
 		set elemAlign = $ASCII(aligns, elemType + 1)
 		
@@ -419,7 +420,7 @@ Number of all available types in CNA.</Description>
 		set cnaVal = value
 	}elseif (type = ..#VOID) {
 		do ..ThrowMessage("#VOID may be used only for the type of return value")
-	}elseif ($ISOBJECT(type)) {
+	}elseif ($LISTVALID(type)) {
 		set cnaVal = ..ConvertStructFromCacheToCNA(type, value)
 	}else {
 		set cnaVal = ..ConvertIntegerFromCacheToCNA(type, size, value)
@@ -451,7 +452,7 @@ Number of all available types in CNA.</Description>
 		set returnValue = value
 	}elseif (type = ..#VOID) {
 		set returnValue = ""
-	}elseif ($ISOBJECT(type)) {
+	}elseif ($LISTVALID(type)) {
 		set returnValue = ..ConvertStructFromCNAToCache(type, value)
 	}else {
 		set returnValue = ..ConvertIntegerFromCNAToCache(type, size, value)
@@ -465,31 +466,33 @@ Number of all available types in CNA.</Description>
 Calls function <var>name</var> from previously loaded dynamic library.
 
 <p> You need to specify type of return value of the function and types of all arguments.
-Types may be represented as one of <class>CNA.CNA</class> parameters if it is a plain C datatype or as <class>%ListOfDataTypes</class> of parameters if it is a structure.
-You need to put all argument types in one collection <class>%ListOfDataTypes</class> and pass it to argument <var>argTypes</var>.
-If there is no arguments you need to pass an empty collection.
+Types may be represented as one of <class>CNA.CNA</class> parameters if it is a plain C datatype or as list of parameters if it is a structure.
+You need to put all argument types into the list and pass it to argument <var>argTypes</var>.
+If there is no arguments you need to pass an empty list.
 
 <p> Argument values is passed the same way as a simple function arguments after first four of it.
 
 <p>See examples in <class>CNA.Tests</class>.]]></Description>
-<FormalSpec>name:%String,returnType,argTypes:%ListOfDataTypes,args...:%List</FormalSpec>
+<FormalSpec>name:%String,returnType,argTypes:%List,args...:%List</FormalSpec>
 <Implementation><![CDATA[
 	set callFunc = $zf(-4, 3, ..CNAId, "call_function")
 	if ('$data(args)) {
 		set args = 0
 	}
-	if (argTypes.Size '= args) {
-		do ..ThrowMessage("Size of collection of argument types and number of arguments must be equal.")
+	if ($LISTLENGTH($get(argTypes)) '= args) {
+		do ..ThrowMessage("Size of list of argument types and number of arguments must be equal.")
 	}
 	set cnaArgTypes = ""
 	set cnaArgs = ""
 	
 	for i = 1:1:args {
 		set val = $GET(args(i))
-		set type = argTypes.GetAt(i)
+		if ('$LISTDATA(argTypes, i)) {
+			do ..ThrowMessage("Incorrect list of argument types")
+		}
+		set type = $LIST(argTypes, i)
 		
-		
-		if ($ISOBJECT(type)) {
+		if ($LISTVALID(type)) {
 			do ..GetSizeAndAlignment(type, .size, .alignment) 
 			set cnaArgs = cnaArgs _ ..ConvertIntegerFromCacheToCNA(..#SIZET, $ASCII(..TypeSizes, ..#SIZET + 1), size)
 		}

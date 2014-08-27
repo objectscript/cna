@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2014.1.1 (Build 702U)" ts="2014-08-25 11:51:29">
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2014.1.1 (Build 702U)" ts="2014-08-27 18:25:56">
 <Class name="CNA.Tests">
 <Super>%UnitTest.TestCase</Super>
 <TimeChanged>63414,62233.33017</TimeChanged>
@@ -86,28 +86,19 @@
 		set cna = ##class(CNA.CNA).%New(..CNAPath)
 		do cna.LoadLibrary(..testLib)
 		
-		set argTypes = ##class(%ListOfDataTypes).%New()
-		do argTypes.Insert(cna.#INT64)
-		do argTypes.Insert(cna.#DOUBLE)
+		set argTypes = $lb(cna.#INT64, cna.#DOUBLE)
 		set retVal = cna.CallFunction("mul", cna.#DOUBLE, argTypes, 10, $double(1.5))
 		do $$$AssertEquals(retVal, $double(15), "Check return value of mul()")
 		
-		do argTypes.Clear()
-		do argTypes.Insert(cna.#DOUBLE)
+		set argTypes = $lb(cna.#DOUBLE)
 		set retVal = cna.CallFunction("square", cna.#DOUBLE, argTypes, $double(12341.12311))
 		do $$$AssertEquals(retVal, $double(12341.12311) * $double(12341.12311), "Check return value of square()")
 
-		do argTypes.Clear()
-		do argTypes.Insert(cna.#UINT)
-		do argTypes.Insert(cna.#UINT)
-		do argTypes.Insert(cna.#UINT)
-		do argTypes.Insert(cna.#UINT)
-		do argTypes.Insert(cna.#UINT)
+		set argTypes = $lb(cna.#UINT, cna.#UINT, cna.#UINT, cna.#UINT, cna.#UINT)
 		set retVal = cna.CallFunction("sum", cna.#UINT, argTypes, 1243, 1231, 121, 12123, 121)
 		do $$$AssertEquals(retVal, 1243 + 1231 + 121 + 12123 + 121, "Check return value of sum()")
 
-		do argTypes.Clear()
-		set retVal = cna.CallFunction("five", cna.#INT, argTypes)
+		set retVal = cna.CallFunction("five", cna.#INT)
 		do $$$AssertEquals(retVal, 5, "Check return value of five()")
 
 		do cna.FreeLibrary()
@@ -124,9 +115,8 @@
 		set cna = ##class(CNA.CNA).%New(..CNAPath)
 		do cna.LoadLibrary(..testLib)
 		
-		set argTypes = ##class(%ListOfDataTypes).%New()
-		do argTypes.Insert(cna.#SIZET)
 		
+		set argTypes = $lb(cna.#SIZET)
 		set memory = cna.CallFunction("mal", cna.#POINTER, argTypes, 8)
 		
 		do cna.PointerSetAt(memory, cna.#UINT, 0, 12345678)		
@@ -138,9 +128,7 @@
 		set mem1 = cna.PointerGetAt(memory, cna.#UINT, 1)
 		do $$$AssertEquals(mem1, 1313, "memory[1] must be equal to 1313")
 		
-		do argTypes.Clear()
-		do argTypes.Insert(cna.#POINTER)
-		
+		set argTypes = $lb(cna.#POINTER)
 		do cna.CallFunction("fr", cna.#VOID, argTypes, memory)
 		
 		set testString = "hi there, i'm testing string."
@@ -161,59 +149,46 @@
 	try {
 		set cna = ##class(CNA.CNA).%New(..CNAPath)
 		do cna.LoadLibrary(..testLib)
-
-		set argTypes = ##class(%ListOfDataTypes).%New()
 		
-		do argTypes.Clear()
-		do argTypes.Insert(cna.#UCHAR)
+		set argTypes = $lb(cna.#UCHAR)
 		set retVal = cna.CallFunction("_uchar", cna.#UCHAR, argTypes, $zhex("FD"))
 		do $$$AssertEquals(retVal, $zhex("FD"), "Check uchar() return value")
 		
-		do argTypes.Clear()
-		do argTypes.Insert(cna.#SCHAR)
+		set argTypes = $lb(cna.#SCHAR)
 		set retVal = cna.CallFunction("_schar", cna.#SCHAR, argTypes, -3)
 		do $$$AssertEquals(retVal, -3, "Check schar() return value")
 		
-		do argTypes.Clear()
-		do argTypes.Insert(cna.#USHORT)
+		set argTypes = $lb(cna.#USHORT)
 		set retVal = cna.CallFunction("_ushort", cna.#USHORT, argTypes, $zhex("FFFD"))
 		do $$$AssertEquals(retVal, $zhex("FFFD"), "Check ushort() return value")
 		
-		do argTypes.Clear()
-		do argTypes.Insert(cna.#SHORT)
+		set argTypes = $lb(cna.#SHORT)
 		set retVal = cna.CallFunction("_sshort", cna.#SHORT, argTypes, -3)
 		do $$$AssertEquals(retVal, -3, "Check sshort() return value")
-
 		
-		do argTypes.Clear()
-		do argTypes.Insert(cna.#UINT)
+		set argTypes = $lb(cna.#UINT)
 		set retVal = cna.CallFunction("_uint", cna.#UINT, argTypes, $zhex("FFFFFFFD"))
 		do $$$AssertEquals(retVal, $zhex("FFFFFFFD"), "Check uint() return value")
 		
-		do argTypes.Clear()
-		do argTypes.Insert(cna.#INT)
+		set argTypes = $lb(cna.#INT)
 		set retVal = cna.CallFunction("_sint", cna.#INT, argTypes, -3)
 		do $$$AssertEquals(retVal, -3, "Check sint() return value")
 
 		
-		do argTypes.Clear()
-		do argTypes.Insert(cna.#ULONG)
+		set argTypes = $lb(cna.#ULONG)
 		set retVal = cna.CallFunction("_ulong", cna.#ULONG, argTypes, $zhex("FFFFFFFD"))
 		do $$$AssertEquals(retVal, $zhex("FFFFFFFD"), "Check ulong() return value")
 		
-		do argTypes.Clear()
-		do argTypes.Insert(cna.#LONG)
+		set argTypes = $lb(cna.#LONG)
 		set retVal = cna.CallFunction("_slong", cna.#LONG, argTypes, -3)
 		do $$$AssertEquals(retVal, -3, "Check slong() return value")
 
 		
-		do argTypes.Clear()
-		do argTypes.Insert(cna.#UINT64)
+		set argTypes = $lb(cna.#UINT64)
 		set retVal = cna.CallFunction("_uint64", cna.#UINT64, argTypes, 1234567890)
 		do $$$AssertEquals(retVal, 1234567890, "Check uint64() return value")
 		
-		do argTypes.Clear()
-		do argTypes.Insert(cna.#INT64)
+		set argTypes = $lb(cna.#INT64)
 		set retVal = cna.CallFunction("_sint64", cna.#INT64, argTypes, -3)
 		do $$$AssertEquals(retVal, -3, "Check sint64() return value")
 		
@@ -231,53 +206,22 @@
 		set cna = ##class(CNA.CNA).%New(..CNAPath)
 		do cna.LoadLibrary(..testLib)
 		
-		set argTypes = ##class(%ListOfDataTypes).%New()
-		set structType = ##class(%ListOfDataTypes).%New()
-		do structType.Insert(cna.#SCHAR)
-		do structType.Insert(cna.#INT64)
-		do structType.Insert(cna.#SCHAR)
-		do argTypes.Insert(structType)
-		
-		set structVal = ##class(%ListOfDataTypes).%New()
-		do structVal.Insert(12)
-		do structVal.Insert(2114)
-		do structVal.Insert(74)
-		
-		set retVal = cna.CallFunction("sum_st", cna.#INT64, argTypes, structVal)
+		set structType = $lb(cna.#SCHAR, cna.#INT64, cna.#SCHAR)
+		set structVal = $lb(12, 2114, 74)
+		set retVal = cna.CallFunction("sum_st", cna.#INT64, $lb(structType), structVal)
 		do $$$AssertEquals(retVal, 2200, "Check return value of sum_st()")
 		
 		
-		do argTypes.Clear()
-		set retVal = cna.CallFunction("create_st", structType, argTypes)
-		do $$$AssertEquals(retVal.GetAt(1), 1, "Check return value of create_st()")
-		do $$$AssertEquals(retVal.GetAt(2), 2, "Check return value of create_st()")
-		do $$$AssertEquals(retVal.GetAt(3), 3, "Check return value of create_st()")
+		set retVal = cna.CallFunction("create_st", structType,)
+		do $$$AssertEquals($LIST(retVal, 1), 1, "Check return value of create_st()")
+		do $$$AssertEquals($LIST(retVal, 2), 2, "Check return value of create_st()")
+		do $$$AssertEquals($LIST(retVal, 3), 3, "Check return value of create_st()")
 		
 		
-		set nestedType = ##class(%ListOfDataTypes).%New()
-		do nestedType.Insert(cna.#SCHAR)
-		do nestedType.Insert(cna.#INT64)
-		do nestedType.Insert(cna.#SCHAR)
+		set nestedType = $lb(cna.#SCHAR, cna.#INT64, cna.#SCHAR)
+		set argTypes = $lb($lb(cna.#SCHAR, nestedType, cna.#SCHAR))
 		
-		do structType.Clear()
-		do structType.Insert(cna.#SCHAR)
-		do structType.Insert(nestedType)
-		do structType.Insert(cna.#SCHAR)
-		
-		do argTypes.Clear()
-		do argTypes.Insert(structType)
-		
-		set nestedVal = ##class(%ListOfDataTypes).%New()
-		do nestedVal.Insert(-14)
-		do nestedVal.Insert(33100)
-		do nestedVal.Insert(28)
-		
-		do structVal.Clear()
-		do structVal.Insert(12)
-		do structVal.Insert(nestedVal)
-		do structVal.Insert(74)
-		
-		
+		set structVal = $lb(12, $lb(-14, 33100, 28), 74)
 		
 		set retVal = cna.CallFunction("sum_nested", cna.#INT64, argTypes, structVal)
 		do $$$AssertEquals(retVal, 33200, "Check return value of sum_nested()")
@@ -297,16 +241,12 @@
 		set cna = ##class(CNA.CNA).%New(..CNAPath)
 		do cna.LoadLibrary(..testLib)
 		
-		set argTypes = ##class(%ListOfDataTypes).%New()
-		do argTypes.Insert(cna.#FLOAT)
-		do argTypes.Insert(cna.#FLOAT)
+		set argTypes = $lb(cna.#FLOAT, cna.#FLOAT)
 		set retVal = cna.CallFunction("sum_float", cna.#FLOAT, argTypes, $double(0.2), $double(1.5))
 		do $$$AssertEquals($zabs(retVal - $double(1.7)) < $double(0.0000001), 1, "Check return value of sum_float()")
 		
 		if ($SYSTEM.Version.GetOS() = "UNIX") {
-			do argTypes.Clear()
-			do argTypes.Insert(cna.#LONGDOUBLE)
-			do argTypes.Insert(cna.#LONGDOUBLE)
+			set argTypes = $lb(cna.#LONGDOUBLE, cna.#LONGDOUBLE)
 			set retVal = cna.CallFunction("sum_long_double", cna.#LONGDOUBLE, argTypes, $double(0.2), $double(1.5))
 			do $$$AssertEquals(retVal, $double(1.7), "Check return value of sum_long_double()")
 		}
@@ -331,9 +271,7 @@
 		set pointer = cna.ConvertStreamToPointer(file)
 		set path = cna.ConvertStringToPointer(..Ulysses)
 			
-		set argTypes = ##class(%ListOfDataTypes).%New()
-		do argTypes.Insert(cna.#POINTER)
-		do argTypes.Insert(cna.#POINTER)
+		set argTypes = $lb(cna.#POINTER, cna.#POINTER)
 		
 		set retVal = cna.CallFunction("compare_string_and_ulysses", cna.#INT, argTypes, pointer, path)
 		do $$$AssertEquals(retVal, 1, "Check retval")
