@@ -65,27 +65,15 @@
 	try {
 		set colors = "red,green,blue,black,gold,cyan,magenta,yellow,coral,indigo,grey,crimson"
 
-		set argTypes = ##class(%ListOfDataTypes).%New()
-		do argTypes.Insert(..cgraph.#POINTER)
-		do argTypes.Insert(..cgraph.#UCHAR)
-		do argTypes.Insert(..cgraph.#POINTER)
+		set argTypes = $lb(..cgraph.#POINTER, ..cgraph.#UCHAR, ..cgraph.#POINTER)
 		set name = ..cgraph.ConvertStringToPointer("CNA graph")
 		set graph = ..cgraph.CallFunction("agopen", ..cgraph.#POINTER, argTypes, name, 9, ..cgraph.NULL)
-		w graph, !
 
-		do argTypes.Clear()
-		do argTypes.Insert(..cgraph.#POINTER)
-		do argTypes.Insert(..cgraph.#POINTER)
-		do argTypes.Insert(..cgraph.#INT)
+		set argTypes = $lb(..cgraph.#POINTER, ..cgraph.#POINTER, ..cgraph.#INT)
 		set name = ..cgraph.ConvertStringToPointer("0")
 		set startNode = ..cgraph.CallFunction("agnode", ..cgraph.#POINTER, argTypes, graph, name, 1)
-		w startNode, !
-
-		do argTypes.Clear()
-		do argTypes.Insert(..cgraph.#POINTER)
-		do argTypes.Insert(..cgraph.#INT)
-		do argTypes.Insert(..cgraph.#POINTER)
-		do argTypes.Insert(..cgraph.#POINTER)
+	
+		set argTypes = $lb(..cgraph.#POINTER, ..cgraph.#INT, ..cgraph.#POINTER, ..cgraph.#POINTER)
 		set name = ..cgraph.ConvertStringToPointer("color")
 		set color = ..cgraph.ConvertStringToPointer("black")
 		do ..cgraph.CallFunction("agattr", ..cgraph.#POINTER, argTypes, graph, 2, name, color)
@@ -93,25 +81,14 @@
 		set oldNode = startNode
 
 		for i=1:1:11 {
-			do argTypes.Clear()
-			do argTypes.Insert(..cgraph.#POINTER)
-			do argTypes.Insert(..cgraph.#POINTER)
-			do argTypes.Insert(..cgraph.#INT)
+			set argTypes = $lb(..cgraph.#POINTER, ..cgraph.#POINTER, ..cgraph.#INT)
 			set name = ..cgraph.ConvertStringToPointer(i)
 			set newNode = ..cgraph.CallFunction("agnode", ..cgraph.#POINTER, argTypes, graph, name, 1)
 
-			do argTypes.Clear()
-			do argTypes.Insert(..cgraph.#POINTER)
-			do argTypes.Insert(..cgraph.#POINTER)
-			do argTypes.Insert(..cgraph.#POINTER)
-			do argTypes.Insert(..cgraph.#POINTER)
-			do argTypes.Insert(..cgraph.#INT)
+			set argTypes = $lb(..cgraph.#POINTER, ..cgraph.#POINTER, ..cgraph.#POINTER, ..cgraph.#POINTER, ..cgraph.#INT)
 			set edge = ..cgraph.CallFunction("agedge", ..cgraph.#POINTER, argTypes, graph, oldNode, newNode, ..cgraph.NULL, 1)
 
-			do argTypes.Clear()
-			do argTypes.Insert(..cgraph.#POINTER)
-			do argTypes.Insert(..cgraph.#POINTER)
-			do argTypes.Insert(..cgraph.#POINTER)
+			set argTypes = $lb(..cgraph.#POINTER, ..cgraph.#POINTER, ..cgraph.#POINTER)
 			set name = ..cgraph.ConvertStringToPointer("color")
 			set color = ..cgraph.ConvertStringToPointer($p(colors, ",", $r(12) + 1))
 			do ..cgraph.CallFunction("agset", ..cgraph.#INT, argTypes, edge, name, color)
@@ -119,36 +96,24 @@
 			set oldNode = newNode
 		}
 
-		do argTypes.Clear()
-		do argTypes.Insert(..cgraph.#POINTER)
-		do argTypes.Insert(..cgraph.#POINTER)
-		do argTypes.Insert(..cgraph.#POINTER)
-		do argTypes.Insert(..cgraph.#POINTER)
-		do argTypes.Insert(..cgraph.#INT)
+		set argTypes = $lb(..cgraph.#POINTER, ..cgraph.#POINTER, ..cgraph.#POINTER, ..cgraph.#POINTER, ..cgraph.#INT)
 		set edge = ..cgraph.CallFunction("agedge", ..cgraph.#POINTER, argTypes, graph, oldNode, startNode, ..cgraph.NULL, 1)
-
-
-		do argTypes.Clear()
-		set gvc = ..gvc.CallFunction("gvContext", ..gvc.#POINTER, argTypes)
-		w gvc, !
-		do argTypes.Insert(..gvc.#POINTER)
-		do argTypes.Insert(..gvc.#POINTER)
-		do argTypes.Insert(..gvc.#POINTER)
+	
+		set gvc = ..gvc.CallFunction("gvContext", ..gvc.#POINTER)
+		
+		set argTypes = $lb(..gvc.#POINTER, ..gvc.#POINTER, ..gvc.#POINTER)
 		set layout = ..gvc.ConvertStringToPointer("neato")
 		do ..gvc.CallFunction("gvLayout", ..gvc.#INT, argTypes, gvc, graph, layout)
 
-		do argTypes.Insert(..gvc.#POINTER)
+		set $li(argTypes, *+1) = ..gvc.#POINTER
 		set format = ..gvc.ConvertStringToPointer("svg")
 		set file = ..gvc.ConvertStringToPointer(path)
 		do ..gvc.CallFunction("gvRenderFilename", ..gvc.#INT, argTypes, gvc, graph, format, file)
 
-		do argTypes.Clear()
-		do argTypes.Insert(..gvc.#POINTER)
-		do argTypes.Insert(..gvc.#POINTER)
+		set argTypes = $lb(..gvc.#POINTER, ..gvc.#POINTER)
 		do ..gvc.CallFunction("gvFreeLayout", ..gvc.#INT, argTypes, gvc, graph)
 
-		do argTypes.Clear()
-		do argTypes.Insert(..gvc.#POINTER)
+		set argTypes = $lb(..gvc.#POINTER)
 		do ..gvc.CallFunction("gvFreeContext", ..gvc.#INT, argTypes, gvc)
 		do ..cgraph.CallFunction("agclose", ..cgraph.#INT, argTypes, graph)
 	} catch ex {

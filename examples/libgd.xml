@@ -65,9 +65,7 @@
 	try {
 		set prev = ..gd.NULL
 
-		set argTypes = ##class(%ListOfDataTypes).%New()
-		do argTypes.Insert(..libc.#POINTER)
-		do argTypes.Insert(..libc.#POINTER)
+		set argTypes = $lb(..libc.#POINTER, ..libc.#POINTER)
 
 		set pPath = ..libc.ConvertStringToPointer(path)
 		set pMode = ..libc.ConvertStringToPointer("wb")
@@ -78,65 +76,38 @@
 			return
 		}
 
-		do argTypes.Clear()
-		do argTypes.Insert(..gd.#INT)
-		do argTypes.Insert(..gd.#INT)
+		set argTypes = $lb(..gd.#INT, ..gd.#INT)
 		set im = ..gd.CallFunction("gdImageCreate", ..gd.#POINTER, argTypes, 500, 500)
 
-		do argTypes.Clear()
-		do argTypes.Insert(..gd.#POINTER)
-		do argTypes.Insert(..gd.#INT)
-		do argTypes.Insert(..gd.#INT)
-		do argTypes.Insert(..gd.#INT)
+		set argTypes = $lb(..gd.#POINTER, ..gd.#INT, ..gd.#INT, ..gd.#INT)
 		do ..gd.CallFunction("gdImageColorAllocate", ..gd.#INT, argTypes, im, 255, 255, 255)
 
-		do argTypes.Clear()
-		do argTypes.Insert(..gd.#POINTER)
-		do argTypes.Insert(..gd.#POINTER)
-		do argTypes.Insert(..gd.#INT)
-		do argTypes.Insert(..gd.#INT)
+		set argTypes = $lb(..gd.#POINTER, ..gd.#POINTER, ..gd.#INT, ..gd.#INT)
 		do ..gd.CallFunction("gdImageGifAnimBegin", ..gd.#VOID, argTypes, im, out, 1, 0)
 
 		for i=1:1:20 {
-			do argTypes.Clear()
-			do argTypes.Insert(..gd.#INT)
-			do argTypes.Insert(..gd.#INT)
+			set argTypes = $lb(..gd.#INT, ..gd.#INT)
 			set im = ..gd.CallFunction("gdImageCreate", ..gd.#POINTER, argTypes, 500, 500)
 
-			do argTypes.Clear()
-			do argTypes.Insert(..gd.#POINTER)
-			do argTypes.Insert(..gd.#INT)
-			do argTypes.Insert(..gd.#INT)
-			do argTypes.Insert(..gd.#INT)
+			set argTypes = $lb(..gd.#POINTER, ..gd.#INT, ..gd.#INT, ..gd.#INT)
 			do ..gd.CallFunction("gdImageColorAllocate", ..gd.#INT, argTypes, im, 255, 255, 255)
 			set color = ..gd.CallFunction("gdImageColorAllocate", ..gd.#INT, argTypes, im, $r(256), $r(256), $r(256))
 
-			do argTypes.Insert(..gd.#INT)
-			do argTypes.Insert(..gd.#INT)
+			set $li(argTypes, *+1) = ..gd.#INT;
 			set d = 50 + $r(250)
 			do ..gd.CallFunction("gdImageFilledEllipse", ..gd.#VOID, argTypes, im, (d \ 2) + $r(500 - d), (d \ 2) + $r(500 - d), d, d, color)
 
-			do argTypes.Clear()
-			do argTypes.Insert(..gd.#POINTER)
-			do argTypes.Insert(..gd.#POINTER)
-			do argTypes.Insert(..gd.#INT)
-			do argTypes.Insert(..gd.#INT)
-			do argTypes.Insert(..gd.#INT)
-			do argTypes.Insert(..gd.#INT)
-			do argTypes.Insert(..gd.#INT)
-			do argTypes.Insert(..gd.#POINTER)
+			set argTypes = $lb(..gd.#POINTER, ..gd.#POINTER, ..gd.#INT, ..gd.#INT, ..gd.#INT, ..gd.#INT, ..gd.#INT, ..gd.#POINTER)
 			do ..gd.CallFunction("gdImageGifAnimAdd", ..gd.#VOID, argTypes, im, out, 1, 0, 0, 10, 1, prev)
 			
 			if (prev '= ..gd.NULL) {
-				do argTypes.Clear()
-				do argTypes.Insert(..gd.#POINTER) 
+				set argTypes = $lb(..gd.#POINTER) 
 				do ..gd.CallFunction("gdImageDestroy", ..gd.#VOID, argTypes, prev)
 			}
 			set prev = im
 		}
 
-		do argTypes.Clear()
-		do argTypes.Insert(..gd.#POINTER) 
+		set argTypes = $lb(..gd.#POINTER)
 		do ..gd.CallFunction("gdImageGifAnimEnd", ..gd.#VOID, argTypes, out)
 		do ..libc.CallFunction("fclose", ..gd.#VOID, argTypes, out)
 	} catch ex {
@@ -155,9 +126,7 @@
 		set rb = ..libc.ConvertStringToPointer("rb")
 		set wb = ..libc.ConvertStringToPointer("wb")
 
-		set argTypes = ##class(%ListOfDataTypes).%New()
-		do argTypes.Insert(..libc.#POINTER)
-		do argTypes.Insert(..libc.#POINTER)
+		set argTypes = $lb(..libc.#POINTER, ..libc.#POINTER)
 
 		set fd = ..libc.CallFunction("fopen", ..libc.#POINTER, argTypes, pPath, rb)
 		if (fd = ..libc.NULL) {
@@ -165,38 +134,25 @@
 			return
 		}
 
-		do argTypes.Clear()
-		do argTypes.Insert(..gd.#POINTER)
+		set argTypes = $lb(..gd.#POINTER)
 		set im = ..gd.CallFunction("gdImageCreateFromPng", ..gd.#POINTER, argTypes, fd)
 		if (im = ..gd.NULL) {
 			write "Can't open png " _ path _ ". File may be corrupt or it does not contain PNG image", !
 			return
 		}
 
-		do argTypes.Clear()
-		do argTypes.Insert(..gd.#POINTER)
-		do argTypes.Insert(..gd.#INT)
-		do argTypes.Insert(..gd.#INT)
-		do argTypes.Insert(..gd.#INT)
+		set argTypes = $lb(..gd.#POINTER, ..gd.#INT, ..gd.#INT, ..gd.#INT)
 		set black = ..gd.CallFunction("gdImageColorAllocate", ..gd.#INT, argTypes, im, 0, 0, 0)
 
-		do argTypes.Clear()
-		set font = ..gd.CallFunction("gdFontGetLarge", ..gd.#POINTER, argTypes)
+		set font = ..gd.CallFunction("gdFontGetLarge", ..gd.#POINTER)
 
-		do argTypes.Clear()
-		do argTypes.Insert(..gd.#POINTER)
-		do argTypes.Insert(..gd.#POINTER)
-		do argTypes.Insert(..gd.#INT)
-		do argTypes.Insert(..gd.#INT)
-		do argTypes.Insert(..gd.#POINTER)
-		do argTypes.Insert(..gd.#INT)
+		set argTypes = $lb(..gd.#POINTER, ..gd.#POINTER, ..gd.#INT, ..gd.#INT, ..gd.#POINTER, ..gd.#INT)
 		do ..gd.CallFunction("gdImageString", ..gd.#VOID, argTypes, im, font, 0, 0, pText, black)
 
-		do argTypes.Clear()
-		do argTypes.Insert(..gd.#POINTER) 
+		set argTypes = $lb(..gd.#POINTER) 
 		do ..libc.CallFunction("fclose", ..gd.#VOID, argTypes, fd)
 		
-		do argTypes.Insert(..libc.#POINTER)
+		set $li(argTypes, *+1) = ..libc.#POINTER
 		set fd = ..libc.CallFunction("fopen", ..libc.#POINTER, argTypes, out, wb)
 		if (fd = ..libc.NULL) {
 			write "Can't open file " _ saveTo _ "for writing", !
@@ -205,8 +161,7 @@
 
 		do ..gd.CallFunction("gdImagePng", ..gd.#VOID, argTypes, im, fd)
 
-		do argTypes.Clear()
-		do argTypes.Insert(..gd.#POINTER) 
+		set argTypes = $lb(..gd.#POINTER) 
 		do ..libc.CallFunction("fclose", ..gd.#VOID, argTypes, fd)
 		
 	} catch ex {

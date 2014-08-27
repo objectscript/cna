@@ -50,9 +50,7 @@
 		set aff = ..CNA.ConvertStringToPointer(affPath)
 		set dic = ..CNA.ConvertStringToPointer(dicPath)
 		
-		set argTypes = ##class(%ListOfDataTypes).%New()
-		do argTypes.Insert(..CNA.#POINTER)
-		do argTypes.Insert(..CNA.#POINTER)
+		set argTypes = $lb(..CNA.#POINTER, ..CNA.#POINTER)
 		
 		set ..Hunspell =  ..CNA.CallFunction("Hunspell_create", ..CNA.#POINTER, argTypes, aff, dic)
 	} catch ex {
@@ -70,8 +68,7 @@
 <ServerOnly>1</ServerOnly>
 <Implementation><![CDATA[
 	try {
-		set argTypes = ##class(%ListOfDataTypes).%New()
-		do argTypes.Insert(..CNA.#POINTER)
+		set argTypes = $lb(..CNA.#POINTER)
 		do ..CNA.CallFunction("Hunspell_destroy", ..CNA.#VOID, argTypes, ..Hunspell)
 		do ..CNA.FreeLibrary()
 		do ..LibC.FreeLibrary()
@@ -90,9 +87,7 @@ True - correct word, false - incorrect word</Description>
 <ReturnType>%Boolean</ReturnType>
 <Implementation><![CDATA[
 	set pWord = ..CNA.ConvertStringToPointer(word)
-	set argTypes = ##class(%ListOfDataTypes).%New()
-	do argTypes.Insert(..CNA.#POINTER)
-	do argTypes.Insert(..CNA.#POINTER)
+	set argTypes = $lb(..CNA.#POINTER, ..CNA.#POINTER)
 	set res = ..CNA.CallFunction("Hunspell_spell", ..CNA.#INT, argTypes, ..Hunspell, pWord)
 	return res
 ]]></Implementation>
@@ -100,30 +95,25 @@ True - correct word, false - incorrect word</Description>
 
 <Method name="Suggest">
 <FormalSpec>word:%String</FormalSpec>
-<ReturnType>%ListOfDataTypes</ReturnType>
+<ReturnType>%List</ReturnType>
 <Implementation><![CDATA[
 	set pWord = ..CNA.ConvertStringToPointer(word)
 	
-	set argTypes = ##class(%ListOfDataTypes).%New()
-	do argTypes.Insert(..CNA.#SIZET)
+	set argTypes = $lb(..CNA.#SIZET)
 	set pArray = ..LibC.CallFunction("malloc", ..LibC.#POINTER, argTypes, 8)
 	
-	do argTypes.Clear()
-	do argTypes.Insert(..CNA.#POINTER)
-	do argTypes.Insert(..CNA.#POINTER)
-	do argTypes.Insert(..CNA.#POINTER)
+	set argTypes = $lb(..CNA.#POINTER, ..CNA.#POINTER, ..CNA.#POINTER)
 	set numberOfSuggestions = ..CNA.CallFunction("Hunspell_suggest", ..CNA.#INT, argTypes, ..Hunspell, pArray, pWord)
 
-	set suggestions = ##class(%ListOfDataTypes).%New()
+	set suggestions = ""
 	set array = ..CNA.PointerGetAt(pArray, ..CNA.#POINTER, 0)
 	
 	for i=1:1:numberOfSuggestions {
 		set elem = ..CNA.PointerGetAt(array, ..CNA.#POINTER, i - 1)
-		do suggestions.Insert(..CNA.ConvertPointerToString(elem))
+		set $li(suggestions, *+1) = ..CNA.ConvertPointerToString(elem)
 	}
 	
-	do argTypes.Clear()
-	do argTypes.Insert(..CNA.#POINTER)
+	set argTypes = $lb(..CNA.#POINTER)
 	do ..LibC.CallFunction("free", ..LibC.#VOID, argTypes, pArray)
 	
 	return suggestions

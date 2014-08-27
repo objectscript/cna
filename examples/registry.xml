@@ -28,8 +28,7 @@ if ($Data(%request.Data("subkey", 1)) && $Data(%request.Data("param", 1))) {
 		set libc = ##class(CNA.CNA).%New(CNAPath)
 		do libc.LoadLibrary("C:\Windows\System32\msvcrt.dll")
 		
-		set argTypes = ##class(%ListOfDataTypes).%New()
-		do argTypes.Insert(libc.#SIZET)
+		set argTypes = $lb(libc.#SIZET)
 		set phkey = libc.CallFunction("malloc", libc.#POINTER, argTypes, 4) 
 		set size = 1000
 		set valueBuf = libc.CallFunction("malloc", libc.#POINTER, argTypes, size) 
@@ -39,9 +38,7 @@ if ($Data(%request.Data("subkey", 1)) && $Data(%request.Data("param", 1))) {
 		set advapi = ##class(CNA.CNA).%New(CNAPath)
 		do advapi.LoadLibrary("C:\Windows\System32\advapi32.dll")
 
-		do argTypes.Clear()
-		do argTypes.Insert(advapi.#LONG)
-		do argTypes.Insert(advapi.#POINTER)
+		set argTypes = $lb(advapi.#LONG, advapi.#POINTER)
 
 		set res = advapi.CallFunction("RegOpenCurrentUser", advapi.#INT, argTypes, $zhex("20019"), phkey)
 		if (res '= 0) {
@@ -51,14 +48,7 @@ if ($Data(%request.Data("subkey", 1)) && $Data(%request.Data("param", 1))) {
 
 		set hkey = advapi.PointerGetAt(phkey, advapi.#ULONG, 0)
 
-		do argTypes.Clear()
-		do argTypes.Insert(advapi.#ULONG)
-		do argTypes.Insert(advapi.#POINTER)
-		do argTypes.Insert(advapi.#POINTER)
-		do argTypes.Insert(advapi.#ULONG)
-		do argTypes.Insert(advapi.#POINTER)
-		do argTypes.Insert(advapi.#POINTER)
-		do argTypes.Insert(advapi.#POINTER)
+		set argTypes = $lb(advapi.#ULONG, advapi.#POINTER, advapi.#POINTER, advapi.#ULONG, advapi.#POINTER, advapi.#POINTER, advapi.#POINTER)
 		set pSubkey = advapi.ConvertStringToPointer(subkey)
 		set pParam = advapi.ConvertStringToPointer(param)
 		set res = advapi.CallFunction("RegGetValueA", advapi.#LONG, argTypes, hkey, pSubkey, pParam, $zhex("ffff"), advapi.NULL, valueBuf, sizeBuf)
@@ -70,8 +60,7 @@ if ($Data(%request.Data("subkey", 1)) && $Data(%request.Data("param", 1))) {
 		}
 
 		do advapi.FreeLibrary()
-		do argTypes.Clear()
-		do argTypes.Insert(libc.#POINTER)
+		set argTypes = $lb(libc.#POINTER)
 		do libc.CallFunction("free", libc.#VOID, argTypes, phkey)
 		do libc.CallFunction("free", libc.#VOID, argTypes, valueBuf) 
 		do libc.CallFunction("free", libc.#VOID, argTypes, sizeBuf) 
