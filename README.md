@@ -6,17 +6,17 @@ CNA provides an interface for using native C-compatible shared libraries without
 
 ###Linux###
 
-- Build libfii: `make libffi`. If make says that `GLOBALS_HOME` is undefined, then define it.
+- Build libfii: `make libffi`. If 'make' says that `GLOBALS_HOME` is undefined, then define it:
 
 ```sh
- export GLOBALS_HOME='путь к корневой папке Caché'
+ export GLOBALS_HOME='path to Caché root directory'
 ```
 
 - Build libcna: `make`
 - Done! File we are looking for — libcna.so. After all you need to import "cna.xml" in any Caché namespace:
 
 ```lisp
- do $system.OBJ.Load("путь к cna.xml", "c")
+ do $system.OBJ.Load("path to cna.xml", "c")
 ```
 
 ###Windows###
