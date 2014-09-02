@@ -1,21 +1,19 @@
 #Caché Native Access (CNA)#
 
-CNA provides an interface for using native shared libraries without anything but Caché ObjectScript code.
+CNA provides an interface for using native C-compatible shared libraries without anything but Caché ObjectScript code. CNA is a wrapper for [libffi](https://sourceware.org/libffi/). CNA consists of native library (libcna) and Caché class (CNA.CNA).
 
-CNA — связка класса Caché и библиотеки на C, позволяющая вызывать функции из внешних библиотек, написанных на C или бинарно с ним совместимых. CNA основана на [libffi](https://sourceware.org/libffi/).
-
-##Установка##
+##Installation##
 
 ###Linux###
 
-- Собираем libffi: `make libffi`. Если ругается на отстуствие переменной `GLOBALS_HOME` — прописываем
+- Build libfii: `make libffi`. If make says that `GLOBALS_HOME` is undefined, then define it.
 
 ```sh
  export GLOBALS_HOME='путь к корневой папке Caché'
 ```
 
-- Собираем libcna: `make`
-- Готово! Нужный нам файл — libcna.so. Осталось только импортировать класс cna.xml в любую удобную область Caché:
+- Build libcna: `make`
+- Done! File we are looking for — libcna.so. After all you need to import "cna.xml" in any Caché namespace:
 
 ```lisp
  do $system.OBJ.Load("путь к cna.xml", "c")
@@ -23,42 +21,40 @@ CNA — связка класса Caché и библиотеки на C, поз�
 
 ###Windows###
 
-Для Windows-систем можно повторить указанные выше действия (для компиляции и сборки использовать [mingw32](http://www.mingw.org/) или [mingw32-w64](http://mingw-w64.sourceforge.net/)). Или можно загрузить уже готовые [бинарные версии](https://github.com/intersystems-ru/cna/releases) CNA. **Внимание: разрядности libcna, инсталяции Caché и внешних библиотек доллжны совпадать.** Импорт cna.xml делаем аналогично или через студию.
+For Windows-based systems you can try to do the same as for Linux (for building you may use [mingw32](http://www.mingw.org/) or [mingw32-w64](http://mingw-w64.sourceforge.net/)). Or you can just download [binary files](https://github.com/intersystems-ru/cna/releases). **Note: types (32-bit or 64-bit) of libcna, current Caché installation and external libraries must be equal**
 
-##Запуск тестов##
+##Runnning the Tests##
 
-Для проверки работоспособности CNA можно запустить юнит-тесты. Для запуска тестов необходима библиотека с тестовыми функциями libtest. Если вы собирали libcna сами, то она уже лежит где надо. Если нет — ее нужно поместить в папку `cna/tests/`. Далее, присваиваем глобалу `^UnitTestRoot` нужное значение и запускаем тесты: 
+If you want to check if CNA works correctly on your system you may run the unit-tests. You will need native library with test functions 'libtest'. If you build CNA by yourself, it is already in the right place. If no — it must be placed in directory `cna/tests/`. Than you should set `^UnitTestRoot` global to the right value and run the tests.
 
 ```lisp
- set ^UnitTestRoot="путь к папке tests"  
+ set ^UnitTestRoot="path to 'cna/tests/' directory"  
  do ##class(%UnitTest.Manager).RunTest()
 ```
 
-##Простой пример##
+##Simple Example##
 
-Попробуем вызвать функцию `strlen` из стандартной библиотеки языка C. В Windows она скорее всего находится по адресу `C:\Windows\System32\msvcrt.dll`. В Linux — `/usr/lib/libc.so`. Функция `strlen` возвращает длину строки:
+Let's try to call `strlen` function from C standard lubrary. In Windows it should be located in `C:\Windows\System32\msvcrt.dll`. In Linux — `/usr/lib/libc.so`. `strlen` returns the length of the string:
 
 ```C
  size_t strlen ( const char * str );
 ```
-
-Посмотрим, что нужно сделать, чтобы вызвать ее из Caché:
+Let's see what you need to do to call it from Caché:
 
 ```lisp
- set cna = ##class(CNA.CNA).%New("путь к libcna") ; Создаем объект класса CNA.CNA. В аргументах указываем путь к libcna.dll или libcna.so
- do  cna.LoadLibrary("путь к libc")               ; Загружаем стандартную библиотеку С в CNA
+ set cna = ##class(CNA.CNA).%New("path to libcna"); Creates object of CNA.CNA class.
+ do  cna.LoadLibrary("path to libc")              ; Loads C standard library in CNA
 
- set string = cna.ConvertStringToPointer("Hello") ; Конвертируем нужную строку в массив типа char, и сохраняем указатель на первый
-                                                  ; элемент — именно в таком виде хранятся строки в C 
+ set string = cna.ConvertStringToPointer("Hello") ; Converts the string into char array, and saves pointer to the first element
+                                                  ; That's how string are stored in C
 
- set argTypes = $lb(cna.#POINTER)                 ; Создаем список параметров класса CNA.CNA, в котором передаем типы аргументов
-                                                  ; И вставляем параметр класса, который обозначает тип "указатель"
+ set argTypes = $lb(cna.#POINTER)                 ; Creates list of CNA.CNA pararmeters. Each parameter stands for the type of the function argument
 
- set result = cna.CallFunction("strlen",          ; Передаем имя вызываемой функции,
-                                cna.#SIZET,       ; тип возвращаемого значения,
-                                argTypes,         ; список типов аргументов функции
-                                string)           ; и все значения аргументов через запятую
+ set result = cna.CallFunction("strlen",          ; Passes the name of the function,
+                                cna.#SIZET,       ; type of return value,
+                                argTypes,         ; list of argument types,
+                                string)           ; and comma-separated arguments 
 
- w result, !                                      ; Проверяем результат (должно получиться 5)
- do cna.FreeLibrary()                             ; Освобождаем загруженную библиотеку
+ write result, !                                  ; Writes the result (it should be 5)
+ do cna.FreeLibrary()                             ; Frees the library
 ```
