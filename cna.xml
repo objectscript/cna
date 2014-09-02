@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2014.1.1 (Build 702U)" ts="2014-08-27 18:28:19">
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2014.1.1 (Build 702U)" ts="2014-09-02 17:36:20">
 <Class name="CNA.CNA">
 <Super>%RegisteredObject</Super>
-<TimeChanged>63426,66283.9796</TimeChanged>
+<TimeChanged>63432,63360.958842</TimeChanged>
 <TimeCreated>63383,58144.669569</TimeCreated>
 
 <Property name="LibId">
@@ -211,7 +211,7 @@ Number of all available types in CNA.</Description>
 <Private>1</Private>
 <Implementation><![CDATA[
 	set padding = (alignment - (offset # alignment)) # alignment
-	if ($data(memory)) {
+	if ($DATA(memory)) {
 		for j=1:1:padding {
 			set memory = memory _ $CHAR(0)
 		}
@@ -251,7 +251,7 @@ Number of all available types in CNA.</Description>
 	set os = $SYSTEM.Version.GetOS()
 	set platform = $SYSTEM.Version.GetPlatform()
 	
-	if (((os '= "UNIX") && (os '= "Windows")) || (($find(platform, "x86-32") '= 0) && ($find(platform, "x86-64") '= 0))) {
+	if (((os '= "UNIX") && (os '= "Windows")) || (($FIND(platform, "x86-32") '= 0) && ($FIND(platform, "x86-64") '= 0))) {
 		do ..ThrowMessage("Structures are unsupported on your platform")
 	}
 ]]></Implementation>
@@ -294,7 +294,7 @@ Number of all available types in CNA.</Description>
 <ReturnType>%ListOfDataTypes</ReturnType>
 <Implementation><![CDATA[
 	set aligns = ..GetAlignments()
-	set values = ##class(%ListOfDataTypes).%New()
+	set values = ""
 	set offset = 0
 	for i=1:1:$LISTLENGTH(type) {
 		set elemType = $LIST(type, i)
@@ -303,7 +303,7 @@ Number of all available types in CNA.</Description>
 		
 		set padding = (elemAlign - (offset # elemAlign)) # elemAlign
 		set offset = offset + padding + elemSize
-		do values.Insert(..ConvertFromCNAToCache(elemType, $EXTRACT(struct, offset - elemSize + 1, offset + 1)))
+		set $LIST(values, *+1) = ..ConvertFromCNAToCache(elemType, $EXTRACT(struct, offset - elemSize + 1, offset + 1))
 
 	}	
 	return values
@@ -316,14 +316,14 @@ Number of all available types in CNA.</Description>
 <Private>1</Private>
 <ReturnType>%Integer</ReturnType>
 <Implementation><![CDATA[
-	set max = $case(size, 1:"7F", 2:"7FFF", 4:"7FFFFFFF", 8:"7FFFFFFFFFFFFFFF")
-	set minusOne = $case(size, 1:"FF", 2:"FFFF", 4:"FFFFFFFF", 8:"FFFFFFFFFFFFFFFF")
+	set max = $CASE(size, 1:"7F", 2:"7FFF", 4:"7FFFFFFF", 8:"7FFFFFFFFFFFFFFF")
+	set minusOne = $CASE(size, 1:"FF", 2:"FFFF", 4:"FFFFFFFF", 8:"FFFFFFFFFFFFFFFF")
 	
-	if ((value > $zhex(max)) || (value <= - $zhex(max))) {
+	if ((value > $ZHEX(max)) || (value <= - $ZHEX(max))) {
 		do ..ThrowMessage("Illegal value")
 	} 
 	if (value < 0) {
-		set value = $zhex(minusOne) + value + 1
+		set value = $ZHEX(minusOne) + value + 1
 	}
 	return value
 ]]></Implementation>
@@ -335,14 +335,14 @@ Number of all available types in CNA.</Description>
 <Private>1</Private>
 <ReturnType>%Integer</ReturnType>
 <Implementation><![CDATA[
-	set max = $case(size, 1:"7F", 2:"7FFF", 4:"7FFFFFFF", 8:"7FFFFFFFFFFFFFFF")
-	set minusOne = $case(size, 1:"FF", 2:"FFFF", 4:"FFFFFFFF", 8:"FFFFFFFFFFFFFFFF")
+	set max = $CASE(size, 1:"7F", 2:"7FFF", 4:"7FFFFFFF", 8:"7FFFFFFFFFFFFFFF")
+	set minusOne = $CASE(size, 1:"FF", 2:"FFFF", 4:"FFFFFFFF", 8:"FFFFFFFFFFFFFFFF")
 	
-	if ((value < 0) || (value > $zhex(minusOne))) {
+	if ((value < 0) || (value > $ZHEX(minusOne))) {
 		do ..ThrowMessage("Illegal Value")
 	}
-	if (value > $zhex(max)) {
-		set value = value - $zhex(minusOne) - 1
+	if (value > $ZHEX(max)) {
+		set value = value - $ZHEX(minusOne) - 1
 	}
 	return value
 ]]></Implementation>
@@ -385,7 +385,7 @@ Number of all available types in CNA.</Description>
 	                 (type = ..#SIZET ) ||
 	                 (type = ..#UINT64)
 	                 
-	set value = $case(size, 1:$ASCII(value), 2:$ZWASCII(value), 4:$ZLASCII(value), 8:$ZQASCII(value))
+	set value = $CASE(size, 1:$ASCII(value), 2:$ZWASCII(value), 4:$ZLASCII(value), 8:$ZQASCII(value))
 	
 	if (('isUnsigned) && ((size = 1) || (size = 2) || (size = 4))) {
 		set value = ..UnsignedToSigned(value, size)
@@ -409,11 +409,11 @@ Number of all available types in CNA.</Description>
 	set size = $ASCII(..TypeSizes, type + 1)
 			
 	if (type = ..#FLOAT) {
-		set d2f = $zf(-4, 3, ..CNAId, "double_to_float")
-		set cnaVal = $zf(-5, ..CNAId, d2f, $ZDCHAR(value))
+		set d2f = $ZF(-4, 3, ..CNAId, "double_to_float")
+		set cnaVal = $ZF(-5, ..CNAId, d2f, $ZDCHAR(value))
 	}elseif (type = ..#LONGDOUBLE) {
-		set d2ld = $zf(-4, 3, ..CNAId, "double_to_long_double")
-		set cnaVal = $zf(-5, ..CNAId, d2ld, $ZDCHAR(value))
+		set d2ld = $ZF(-4, 3, ..CNAId, "double_to_long_double")
+		set cnaVal = $ZF(-5, ..CNAId, d2ld, $ZDCHAR(value))
 	}elseif (type = ..#DOUBLE) {
 		set cnaVal = $ZDCHAR(value)
 	}elseif (type = ..#POINTER) {
@@ -441,10 +441,10 @@ Number of all available types in CNA.</Description>
 	}
 	set size = $ASCII(..TypeSizes, type + 1)
 	if (type = ..#FLOAT) {
-		set f2d = $zf(-4, 3, ..CNAId, "float_to_double")
+		set f2d = $ZF(-4, 3, ..CNAId, "float_to_double")
 		set returnValue = $ZDASCII($zf(-5, ..CNAId, f2d, value))
 	}elseif (type = ..#LONGDOUBLE) {
-		set ld2d = $zf(-4, 3, ..CNAId, "long_double_to_double")
+		set ld2d = $ZF(-4, 3, ..CNAId, "long_double_to_double")
 		set returnValue = $ZDASCII($zf(-5, ..CNAId, ld2d, value))
 	}elseif (type = ..#DOUBLE) {
 		set returnValue = $ZDASCII(value)
@@ -475,11 +475,11 @@ If there is no arguments you need to pass an empty list.
 <p>See examples in <class>CNA.Tests</class>.]]></Description>
 <FormalSpec>name:%String,returnType,argTypes:%List,args...:%List</FormalSpec>
 <Implementation><![CDATA[
-	set callFunc = $zf(-4, 3, ..CNAId, "call_function")
-	if ('$data(args)) {
+	set callFunc = $ZF(-4, 3, ..CNAId, "call_function")
+	if ('$DATA(args)) {
 		set args = 0
 	}
-	if ($LISTLENGTH($get(argTypes)) '= args) {
+	if ($LISTLENGTH($GET(argTypes)) '= args) {
 		do ..ThrowMessage("Size of list of argument types and number of arguments must be equal.")
 	}
 	set cnaArgTypes = ""
@@ -501,7 +501,7 @@ If there is no arguments you need to pass an empty list.
 		set cnaArgTypes = cnaArgTypes _ ..ConvertTypeFromCacheToCNA(type)
 	}
 	set cnaArgTypes = cnaArgTypes _ ..ConvertTypeFromCacheToCNA(returnType)
-	set cnaRet = $zf(-5, ..CNAId, callFunc, ..LibId, name, cnaArgTypes, cnaArgs)
+	set cnaRet = $ZF(-5, ..CNAId, callFunc, ..LibId, name, cnaArgTypes, cnaArgs)
 			
 	set returnValue =  ..ConvertFromCNAToCache(returnType, cnaRet)
 	return returnValue
@@ -513,8 +513,8 @@ If there is no arguments you need to pass an empty list.
 Loads dynamic library with path <var>path</var> to CNA.]]></Description>
 <FormalSpec>path:%String</FormalSpec>
 <Implementation><![CDATA[
-	set loadLib = $zf(-4, 3, ..CNAId, "load_library")
-	set ..LibId = $zf(-5, ..CNAId, loadLib, path)
+	set loadLib = $ZF(-4, 3, ..CNAId, "load_library")
+	set ..LibId = $ZF(-5, ..CNAId, loadLib, path)
 ]]></Implementation>
 </Method>
 
@@ -522,8 +522,8 @@ Loads dynamic library with path <var>path</var> to CNA.]]></Description>
 <Description>
 Releases loaded dynamic library from CNA.</Description>
 <Implementation><![CDATA[
-	set freeLib = $zf(-4, 3, ..CNAId, "free_library")
-	do $zf(-5, ..CNAId, freeLib, ..LibId)
+	set freeLib = $ZF(-4, 3, ..CNAId, "free_library")
+	do $ZF(-5, ..CNAId, freeLib, ..LibId)
 ]]></Implementation>
 </Method>
 
@@ -533,13 +533,13 @@ Releases loaded dynamic library from CNA.</Description>
 <ReturnType>%Status</ReturnType>
 <Implementation><![CDATA[
 	try {
-		if (('$data(CNAPath)) || ('##class(%File).Exists(CNAPath))) {
+		if (('$DATA(CNAPath)) || ('##class(%File).Exists(CNAPath))) {
 			do ..ThrowMessage("CNA file doesn't exists")	
 		}
 	
-		set ..CNAId = $zf(-4, 1, CNAPath)
-		set getSizes = $zf(-4, 3, ..CNAId, "get_sizes")
-		set ..TypeSizes = $zf(-5, ..CNAId, getSizes)
+		set ..CNAId = $ZF(-4, 1, CNAPath)
+		set getSizes = $ZF(-4, 3, ..CNAId, "get_sizes")
+		set ..TypeSizes = $ZF(-5, ..CNAId, getSizes)
 		set ..Alignments = ..GetAlignments()
 		set ..NULL = ..ConvertFromCacheToCNA(..#SIZET, 0)
 	} catch ex {
@@ -556,12 +556,12 @@ Releases loaded dynamic library from CNA.</Description>
 <ReturnType>%Status</ReturnType>
 <Implementation><![CDATA[
 	try {
-		set s2p = $zf(-4, 3, ..CNAId, "free_pointer")
+		set s2p = $ZF(-4, 3, ..CNAId, "free_pointer")
 		for i=1:1:..AllocatedMemory.Size {
-			do $zf(-5, ..CNAId, s2p, ..AllocatedMemory.GetAt(i))		
+			do $ZF(-5, ..CNAId, s2p, ..AllocatedMemory.GetAt(i))		
 		}
 
-		do $zf(-4, 2, ..CNAId)
+		do $ZF(-4, 2, ..CNAId)
 	} catch ex {
 		do ex.Log()
 		return ex.AsStatus()
@@ -581,9 +581,9 @@ Provides access to array element with index <var>index</var>.
 <p> Operating with pointers may be unsafe!]]></Description>
 <FormalSpec>pointer:%String,type,index:%Integer</FormalSpec>
 <Implementation><![CDATA[
-	set getAt = $zf(-4, 3, ..CNAId, "pointer_get_at")
+	set getAt = $ZF(-4, 3, ..CNAId, "pointer_get_at")
 	set cnaIndex = ..ConvertFromCacheToCNA(..#SIZET, index)
-	set cnaVal = $zf(-5, ..CNAId, getAt, pointer, $CHAR(type), cnaIndex)
+	set cnaVal = $ZF(-5, ..CNAId, getAt, pointer, $CHAR(type), cnaIndex)
 	return ..ConvertFromCNAToCache(type, cnaVal)
 ]]></Implementation>
 </Method>
@@ -599,7 +599,7 @@ Assigns <var>value</var> to array element with index <var>index</var>.
 <p> Operating with pointers may be unsafe!]]></Description>
 <FormalSpec>pointer:%String,type,index:%Integer,value</FormalSpec>
 <Implementation><![CDATA[
-	set setAt = $zf(-4, 3, ..CNAId, "pointer_set_at")
+	set setAt = $ZF(-4, 3, ..CNAId, "pointer_set_at")
 	set cnaVal = ..ConvertFromCacheToCNA(type, value)
 	set cnaIndex = ..ConvertFromCacheToCNA(..#SIZET, index)
 	do $zf(-5, ..CNAId, setAt, pointer, $CHAR(type), cnaIndex, cnaVal)
@@ -612,8 +612,8 @@ Converts Cache string to C array (with UTF8 encoding) and returns a <var>pointer
 <FormalSpec>string:%String</FormalSpec>
 <ReturnType>%String</ReturnType>
 <Implementation><![CDATA[
-	set s2p = $zf(-4, 3, ..CNAId, "string_to_pointer")
-	set pointer = $zf(-5, ..CNAId, s2p, $ZCVT(string, "O", "UTF8"))
+	set s2p = $ZF(-4, 3, ..CNAId, "string_to_pointer")
+	set pointer = $ZF(-5, ..CNAId, s2p, $ZCVT(string, "O", "UTF8"))
 	do ..AllocatedMemory.Insert(pointer)
 	return pointer
 ]]></Implementation>
@@ -625,8 +625,8 @@ Converts UTF8 C-string to Cache string</Description>
 <FormalSpec>pointer:%String</FormalSpec>
 <ReturnType>%String</ReturnType>
 <Implementation><![CDATA[
-	set p2s = $zf(-4, 3, ..CNAId, "pointer_to_string")
-	set string = $zf(-5, ..CNAId, p2s, pointer)
+	set p2s = $ZF(-4, 3, ..CNAId, "pointer_to_string")
+	set string = $ZF(-5, ..CNAId, p2s, pointer)
 	return $ZCVT(string, "I", "UTF8")
 ]]></Implementation>
 </Method>
@@ -637,7 +637,7 @@ Converts Cache stream to C array and returns a <var>pointer</var> to the beginni
 <FormalSpec>stream:%Stream.Object</FormalSpec>
 <ReturnType>%String</ReturnType>
 <Implementation><![CDATA[
-	set a2p = $zf(-4, 3, ..CNAId, "append_to_pointer")
+	set a2p = $ZF(-4, 3, ..CNAId, "append_to_pointer")
 	set len = 0
 	set fullLen = 0
 	set pointer = ..ConvertFromCacheToCNA(..#SIZET, 0)
@@ -646,9 +646,9 @@ Converts Cache stream to C array and returns a <var>pointer</var> to the beginni
 		set string = stream.Read(.len, .st)
 		if ($$$ISERR(st)) {
 			do ..AllocatedMemory.Insert(pointer)
-			return st
+			throw ##class(%Exception.StatusException).CreateFromStatus(st)
 		}
-		set pointer = $zf(-5, ..CNAId, a2p, pointer, ..ConvertFromCacheToCNA(..#SIZET, fullLen), string)			
+		set pointer = $ZF(-5, ..CNAId, a2p, pointer, ..ConvertFromCacheToCNA(..#SIZET, fullLen), string)			
 		set fullLen = fullLen + len
 	}
 	do ..AllocatedMemory.Insert(pointer)
