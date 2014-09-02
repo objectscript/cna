@@ -21,7 +21,7 @@ CNA provides an interface for using native C-compatible shared libraries without
 
 ###Windows###
 
-For Windows-based systems you can try to do the same as for Linux (for building you may use [mingw32](http://www.mingw.org/) or [mingw32-w64](http://mingw-w64.sourceforge.net/)). Or you can just download [binary files](https://github.com/intersystems-ru/cna/releases). **Note: types (32-bit or 64-bit) of libcna, current Caché installation and external libraries must be equal**
+For Windows-based systems you can try to do the same as for Linux (for building you may use [mingw32](http://www.mingw.org/) or [mingw32-w64](http://mingw-w64.sourceforge.net/)). Or you can just download [binary files](https://github.com/intersystems-ru/cna/releases). **Note: types (32-bit or 64-bit) of libcna, current Caché installation and external libraries must be equal.**
 
 ##Runnning the Tests##
 
@@ -34,7 +34,7 @@ If you want to check if CNA works correctly on your system you may run the unit-
 
 ##Simple Example##
 
-Let's try to call `strlen` function from C standard lubrary. In Windows it should be located in `C:\Windows\System32\msvcrt.dll`. In Linux — `/usr/lib/libc.so`. `strlen` returns the length of the string:
+Let's try to call `strlen` function from C standard library. In Windows it should be located in `C:\Windows\System32\msvcrt.dll`. In Linux — `/usr/lib/libc.so`. `strlen` returns the length of the string:
 
 ```C
  size_t strlen ( const char * str );
