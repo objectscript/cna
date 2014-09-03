@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2014.1.1 (Build 702U)" ts="2014-08-18 15:57:38">
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2014.1.1 (Build 702U)" ts="2014-09-03 16:10:57">
 <CSP name="CNARegistryExample.CSP" application="/csp/dev/" default="1"><![CDATA[
 <html>
 <head>
@@ -11,23 +11,27 @@
 <body>
 <form action="CNARegistryExample.csp" method="GET">
 Subkey of HKEY_CURRENT_USER:<br>
-<input type="text" name="subkey"><br>
+<input type="text" name="subkey" value="#($GET(%request.Data("param", 1)))#"><br>
 Parameter:<br>
-<input type="text" name="param"><br>
+<input type="text" name="param" value="#($GET(%request.Data("subkey", 1)))#"><br>
+Path to libcna.dll:<br>
+<input type="text" name="path" value="#($GET(%request.Data("path", 1)))#"><br>
 <button type="submit">Get key</button>
 </form>
 <script language="Cache" runat="server">
 if ($Data(%request.Data("subkey", 1)) && $Data(%request.Data("param", 1))) {
 	try {
+
+		// Получаем параметры HTTP-запроса
+		set CNAPath = %request.Data("path", 1)
 		set subkey = %request.Data("subkey", 1)
 		set param = %request.Data("param", 1)
-		w subkey, "<br>"
-		w param, "<br>"	
-
-		set CNAPath = "C:\Users\dd\Dropbox\is\CNA\libcna.dll"
+		
+		// Создаем объект класса CNA и загружаем туда стандартную бибилиотеку C
 		set libc = ##class(CNA.CNA).%New(CNAPath)
 		do libc.LoadLibrary("C:\Windows\System32\msvcrt.dll")
 		
+		// Вызываем malloc, чтобы выделить память под буферы, кооторые используются в вызовах WinAPI
 		set argTypes = $lb(libc.#SIZET)
 		set phkey = libc.CallFunction("malloc", libc.#POINTER, argTypes, 4) 
 		set size = 1000
@@ -35,19 +39,29 @@ if ($Data(%request.Data("subkey", 1)) && $Data(%request.Data("param", 1))) {
 		set sizeBuf = libc.CallFunction("malloc", libc.#POINTER, argTypes, 4)
 		do libc.PointerSetAt(sizeBuf, libc.#ULONG, 0, size) 
 
+
+		// Загружаем в CNA advapi - билиотеку, в которой находятся функции для работы с реестром
 		set advapi = ##class(CNA.CNA).%New(CNAPath)
 		do advapi.LoadLibrary("C:\Windows\System32\advapi32.dll")
 
-		set argTypes = $lb(advapi.#LONG, advapi.#POINTER)
+		
+		// Открываем ключ HKEY_CURRENT_USER
+		// Прототип функции: LONG RegOpenCurrentUser(REGSAM samDesired, PHKEY phkResult);
+		// LONG - алиас типа int, REGSAM - long, PHKEY - unsigned long *
+		// В первом аргументе передаем права доступа, во втором - указатель на буфер, куда нужно записать дескриптор ключа
+		// Константа 0x20019 означает, что мы открываем ключ с правами KEY_READ
 
+		set argTypes = $lb(advapi.#LONG, advapi.#POINTER)
 		set res = advapi.CallFunction("RegOpenCurrentUser", advapi.#INT, argTypes, $zhex("20019"), phkey)
 		if (res '= 0) {
 			w "RegOpenCurrentUset error: " _ res _ "<br>"
 			return
 		}
 
+		// Получаем значание дескриптора ключа из буфера
 		set hkey = advapi.PointerGetAt(phkey, advapi.#ULONG, 0)
 
+		
 		set argTypes = $lb(advapi.#ULONG, advapi.#POINTER, advapi.#POINTER, advapi.#ULONG, advapi.#POINTER, advapi.#POINTER, advapi.#POINTER)
 		set pSubkey = advapi.ConvertStringToPointer(subkey)
 		set pParam = advapi.ConvertStringToPointer(param)
@@ -56,7 +70,7 @@ if ($Data(%request.Data("subkey", 1)) && $Data(%request.Data("param", 1))) {
 		if (res = 0) {
 			w advapi.ConvertPointerToString(valueBuf), "<br>"
 		} else {
-			w "RegGetValue Error: " _ res _ "<br>"
+			w "<b><font color='red'>RegGetValue Error: " _ res _ "</font></b>"
 		}
 
 		do advapi.FreeLibrary()
@@ -66,7 +80,9 @@ if ($Data(%request.Data("subkey", 1)) && $Data(%request.Data("param", 1))) {
 		do libc.CallFunction("free", libc.#VOID, argTypes, sizeBuf) 
 		do libc.FreeLibrary()
 	} catch ex {
+		w "<b><font color='red'>"
 		w $system.Status.GetErrorText(ex.AsStatus())
+		w "</font></b>"
 	}
 }
 </script>
