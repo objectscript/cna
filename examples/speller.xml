@@ -25,6 +25,7 @@
 <ServerOnly>1</ServerOnly>
 <Implementation><![CDATA[
 	try {
+		// Проверяем существование нужных файлы 
 		if (('$data(CNAPath)) || ('##class(%File).Exists(CNAPath))) {
 			return $$$ERROR("CNA file doesn't exists")	
 		}
@@ -41,17 +42,18 @@
 			return $$$ERROR(".dic file doesn't exists")	
 		}
 		
+		// Создаем объекты класса CNA.CNA и загружаем туда библиотеки
 		set ..CNA = ##class(CNA.CNA).%New(CNAPath)
 		set ..LibC = ##class(CNA.CNA).%New(CNAPath)
-		
 		do ..CNA.LoadLibrary(hunspellPath)
 		do ..LibC.LoadLibrary(libcPath)
 		
+		// Конвертируем строки в указатели, что бы передать их в CNA
 		set aff = ..CNA.ConvertStringToPointer(affPath)
 		set dic = ..CNA.ConvertStringToPointer(dicPath)
 		
+		// Создаем объект hunspell, передаем туда файлы словарей
 		set argTypes = $lb(..CNA.#POINTER, ..CNA.#POINTER)
-		
 		set ..Hunspell =  ..CNA.CallFunction("Hunspell_create", ..CNA.#POINTER, argTypes, aff, dic)
 	} catch ex {
 		do ex.Log()
@@ -68,6 +70,8 @@
 <ServerOnly>1</ServerOnly>
 <Implementation><![CDATA[
 	try {
+
+		// Удаляем объект hunspell и выгружаем бибилиотеки
 		set argTypes = $lb(..CNA.#POINTER)
 		do ..CNA.CallFunction("Hunspell_destroy", ..CNA.#VOID, argTypes, ..Hunspell)
 		do ..CNA.FreeLibrary()
@@ -86,6 +90,11 @@ True - correct word, false - incorrect word</Description>
 <FormalSpec>word:%String</FormalSpec>
 <ReturnType>%Boolean</ReturnType>
 <Implementation><![CDATA[
+
+	// Вызываем функцию проверки слова
+	// Прототип - int Hunspell_spell(Hunhandle *pHunspell, const char *);
+	// Передаем в качестве аргументов указатель на объект hunspell и указатель на проверяемую строку
+
 	set pWord = ..CNA.ConvertStringToPointer(word)
 	set argTypes = $lb(..CNA.#POINTER, ..CNA.#POINTER)
 	set res = ..CNA.CallFunction("Hunspell_spell", ..CNA.#INT, argTypes, ..Hunspell, pWord)
@@ -99,23 +108,33 @@ True - correct word, false - incorrect word</Description>
 <Implementation><![CDATA[
 	set pWord = ..CNA.ConvertStringToPointer(word)
 	
+	// Выделяем память под буфер, куда будем записывать варианты
 	set argTypes = $lb(..CNA.#SIZET)
 	set pArray = ..LibC.CallFunction("malloc", ..LibC.#POINTER, argTypes, 8)
+	
+	
+	// Вызываем функцию Hunspell_suggest, которая предлагает варианты правильного написания
+	// Прототип - int Hunspell_suggest(Hunhandle *pHunspell, char*** slst, const char * word);
+	// slst - указатель на переменную типа char **, куда Hunspell запишет массив строк с предложениям написания
+	// Функция возвращает общее число предложений
 	
 	set argTypes = $lb(..CNA.#POINTER, ..CNA.#POINTER, ..CNA.#POINTER)
 	set numberOfSuggestions = ..CNA.CallFunction("Hunspell_suggest", ..CNA.#INT, argTypes, ..Hunspell, pArray, pWord)
 
 	set suggestions = ""
+
+	// Разыменовавыаем указатель - получаем массив строк
 	set array = ..CNA.PointerGetAt(pArray, ..CNA.#POINTER, 0)
 	
+	// Проходим по всему массиву и конвертируем массив строк C в список из строк Cache
 	for i=1:1:numberOfSuggestions {
 		set elem = ..CNA.PointerGetAt(array, ..CNA.#POINTER, i - 1)
 		set $li(suggestions, *+1) = ..CNA.ConvertPointerToString(elem)
 	}
 	
+	// Освобождаем выделенную память и возвращаем список предложений
 	set argTypes = $lb(..CNA.#POINTER)
 	do ..LibC.CallFunction("free", ..LibC.#VOID, argTypes, pArray)
-	
 	return suggestions
 ]]></Implementation>
 </Method>
