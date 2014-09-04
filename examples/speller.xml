@@ -138,12 +138,16 @@ True - correct word, false - incorrect word</Description>
 	return suggestions
 ]]></Implementation>
 </Method>
-
 <Method name="CheckRuString">
+<Description><![CDATA[
+Checks strings in russian language and writes info about all mistakes in stdout.
+String is splitted to words by following rules: all punctuation marks will be replaced by spaces, all symbols except russian cyrillic and hyphen will be stripped, then string is splitted by the spaces.
+Return value is the number of mistakes in the string. 
+]]></Description>
 <FormalSpec>str:%String</FormalSpec>
 <ReturnType>%Integer</ReturnType>
 <Implementation><![CDATA[
-	set translated = $TRANSLATE(str, ",\/=*:", "      ")
+	set translated = $TRANSLATE(str, ".,\/=*:", "      ")
 	set stripped =  $ZSTRIP(translated, "*E", "", " -йцукеёнгшщзхъфывапролджэячсмитьбюЙЦУКЕЁНГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮ")
 	set list = $LFS(stripped, " ")
 						
@@ -166,6 +170,12 @@ True - correct word, false - incorrect word</Description>
 </Method>
 
 <Method name="CheckLocalization">
+<Description><![CDATA[Checks russian localization. By default it checks localization stored in global "^CacheMsg". 
+If you use $$$TEXT localizaion method, then your local strings are stored exactly in this global. If no you can pass the global that you like.
+But this global must have strictly defined structure: on the second level it must have subnode "ru" and all the local strings must be values of "ru" subnodes. 
+All located mistakes will be stored in file with path <var>file</var> (Default path is "mistakes.txt" in your working directory).
+Return value is the number of mistakes in all localization .
+]]> </Description>
 <FormalSpec>global="^CacheMsg",file="mistakes.txt"</FormalSpec>
 <ReturnType>%Integer</ReturnType>
 <Implementation><![CDATA[
@@ -199,6 +209,7 @@ True - correct word, false - incorrect word</Description>
 ]]></Implementation>
 </Method>
 
+<Description>Checks system russian localizaion.</Description>
 <Method name="CheckSystemLocalization">
 <ReturnType>%Integer</ReturnType>
 <Implementation><![CDATA[	return ..CheckLocalization("^%qCacheMsg")
