@@ -61,7 +61,15 @@ if ($Data(%request.Data("subkey", 1)) && $Data(%request.Data("param", 1))) {
 		// Получаем значание дескриптора ключа из буфера
 		set hkey = advapi.PointerGetAt(phkey, advapi.#ULONG, 0)
 
-		
+		// Получаем значение подключа реестра
+		// Прототип функции: LONG RegGetValueA(HKEY hkey, LPCSTR lpSubKey, LPCSTR lpValue, DWORD dwFlags, LPDWORD pdwType, PVOID pvData, LPWWORD pcbData);
+		// hkey - дескриптор ключа, тип unsigned long
+		// lpSubKey - строка с именем подключа, тип char *
+		// dwFlags - флаг ограничения на тип значения ключа, Oxffff означает, что никаких ограничений нет
+		// pdwType - указатель на буфер, куда записывается тип данных этого подключа. Нам это не нужно, поэтому передаем NULL
+		// pvData - указатель на буфер, куда записывается искомое значение
+		// pcbData - указатель на переменную, где хранится размер буфера pvData
+
 		set argTypes = $lb(advapi.#ULONG, advapi.#POINTER, advapi.#POINTER, advapi.#ULONG, advapi.#POINTER, advapi.#POINTER, advapi.#POINTER)
 		set pSubkey = advapi.ConvertStringToPointer(subkey)
 		set pParam = advapi.ConvertStringToPointer(param)
@@ -73,6 +81,8 @@ if ($Data(%request.Data("subkey", 1)) && $Data(%request.Data("param", 1))) {
 			w "<b><font color='red'>RegGetValue Error: " _ res _ "</font></b>"
 		}
 
+
+		// Выгружаем библиотеки и освобождаем выделенную память
 		do advapi.FreeLibrary()
 		set argTypes = $lb(libc.#POINTER)
 		do libc.CallFunction("free", libc.#VOID, argTypes, phkey)
