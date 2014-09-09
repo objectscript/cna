@@ -93,7 +93,7 @@
 			do ..gd.CallFunction("gdImageColorAllocate", ..gd.#INT, argTypes, im, 255, 255, 255)
 			set color = ..gd.CallFunction("gdImageColorAllocate", ..gd.#INT, argTypes, im, $r(256), $r(256), $r(256))
 
-			set $li(argTypes, *+1) = ..gd.#INT;
+			set $li(argTypes, *+1) = ..gd.#INT
 			set d = 50 + $r(250)
 			do ..gd.CallFunction("gdImageFilledEllipse", ..gd.#VOID, argTypes, im, (d \ 2) + $r(500 - d), (d \ 2) + $r(500 - d), d, d, color)
 

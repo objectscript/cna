@@ -209,7 +209,7 @@ Return value is the number of mistakes in all localization .
 ]]></Implementation>
 </Method>
 
-<Description>Checks system russian localizaion.</Description>
+<Description>Checks russian system localizaion.</Description>
 <Method name="CheckSystemLocalization">
 <ReturnType>%Integer</ReturnType>
 <Implementation><![CDATA[	return ..CheckLocalization("^%qCacheMsg")

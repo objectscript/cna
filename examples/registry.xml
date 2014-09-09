@@ -1,19 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2014.1.1 (Build 702U)" ts="2014-09-03 16:10:57">
+<Export generator="Cache" version="25" zv="Cache for Windows (x86-64) 2014.1.1 (Build 702U)" ts="2014-09-08 17:44:46">
 <CSP name="CNARegistryExample.CSP" application="/csp/dev/" default="1"><![CDATA[
 <html>
 <head>
-
 <title> CNA Registry Example </title>
-
 </head>
-
 <body>
 <form action="CNARegistryExample.csp" method="GET">
 Subkey of HKEY_CURRENT_USER:<br>
-<input type="text" name="subkey" value="#($GET(%request.Data("param", 1)))#"><br>
+<input type="text" name="subkey" value="#($GET(%request.Data("subkey", 1)))#"><br>
 Parameter:<br>
-<input type="text" name="param" value="#($GET(%request.Data("subkey", 1)))#"><br>
+<input type="text" name="param" value="#($GET(%request.Data("param", 1)))#"><br>
 Path to libcna.dll:<br>
 <input type="text" name="path" value="#($GET(%request.Data("path", 1)))#"><br>
 <button type="submit">Get key</button>
@@ -31,7 +28,7 @@ if ($Data(%request.Data("subkey", 1)) && $Data(%request.Data("param", 1))) {
 		set libc = ##class(CNA.CNA).%New(CNAPath)
 		do libc.LoadLibrary("C:\Windows\System32\msvcrt.dll")
 		
-		// Вызываем malloc, чтобы выделить память под буферы, кооторые используются в вызовах WinAPI
+		// Вызываем malloc, чтобы выделить память под буферы, которые используются в вызовах WinAPI
 		set argTypes = $lb(libc.#SIZET)
 		set phkey = libc.CallFunction("malloc", libc.#POINTER, argTypes, 4) 
 		set size = 1000
@@ -54,7 +51,7 @@ if ($Data(%request.Data("subkey", 1)) && $Data(%request.Data("param", 1))) {
 		set argTypes = $lb(advapi.#LONG, advapi.#POINTER)
 		set res = advapi.CallFunction("RegOpenCurrentUser", advapi.#INT, argTypes, $zhex("20019"), phkey)
 		if (res '= 0) {
-			w "RegOpenCurrentUset error: " _ res _ "<br>"
+			write "<b><font color='red'>RegOpenCurrentUset error: " _ res _ "</font></b>"
 			return
 		}
 
@@ -76,9 +73,9 @@ if ($Data(%request.Data("subkey", 1)) && $Data(%request.Data("param", 1))) {
 		set res = advapi.CallFunction("RegGetValueA", advapi.#LONG, argTypes, hkey, pSubkey, pParam, $zhex("ffff"), advapi.NULL, valueBuf, sizeBuf)
 
 		if (res = 0) {
-			w advapi.ConvertPointerToString(valueBuf), "<br>"
+			write advapi.ConvertPointerToString(valueBuf), "<br>"
 		} else {
-			w "<b><font color='red'>RegGetValue Error: " _ res _ "</font></b>"
+			write "<b><font color='red'>RegGetValue Error: " _ res _ "</font></b>"
 		}
 
 
@@ -90,9 +87,9 @@ if ($Data(%request.Data("subkey", 1)) && $Data(%request.Data("param", 1))) {
 		do libc.CallFunction("free", libc.#VOID, argTypes, sizeBuf) 
 		do libc.FreeLibrary()
 	} catch ex {
-		w "<b><font color='red'>"
+		write "<b><font color='red'>"
 		w $system.Status.GetErrorText(ex.AsStatus())
-		w "</font></b>"
+		write "</font></b>"
 	}
 }
 </script>
