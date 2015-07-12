@@ -1,7 +1,5 @@
 #Caché Native Access (CNA)#
 
-CNA provides an interface for using native shared libraries without anything but Caché ObjectScript code.
-
 CNA — связка класса Caché и библиотеки на C, позволяющая вызывать функции из внешних библиотек, написанных на C или бинарно с ним совместимых. CNA основана на [libffi](https://sourceware.org/libffi/).
 
 ##Установка##
