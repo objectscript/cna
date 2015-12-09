@@ -22,6 +22,16 @@ CNA provides an interface for using native C-compatible shared libraries without
 ###Windows###
 
 For Windows-based systems you can try to do the same as for Linux (for building you may use [mingw32](http://www.mingw.org/) or [mingw32-w64](http://mingw-w64.sourceforge.net/)). Or you can just download [binary files](https://github.com/intersystems-ru/cna/releases). **Note: types (32-bit or 64-bit) of libcna, current Caché installation and external libraries must be equal.**
+For building you can use [MSYS2](http://msys2.github.io/). 
+How to:
+
+1. Install MSYS,
+2. Then run correct bash (32 or 64)
+3. Install make, textinfo with ```pacman -S make, textinfo```
+   - For 64bit install mingw-w64-x86_64-gcc with ```pacman -S mingw-w64-x86_64-gcc```
+   - For 32bit install gcc with ```pacman -S gcc```
+4. Modify makefile, replace: ```cd libs/libffi && ./configure --build=$(BUILDSYS) --enable-shared=no && $(MAKE)``` with ```cd libs/libffi && ./configure --prefix=/mingw --build=$(BUILDSYS) --enable-shared=no && $(MAKE)```
+5. Follow linux installation steps
 
 ##Runnning tests##
 
