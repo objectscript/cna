@@ -1,10 +1,10 @@
-#Caché Native Access (CNA)#
+# Caché Native Access (CNA)
 
 CNA provides an interface for using native C-compatible shared libraries without anything but Caché ObjectScript code. CNA is a wrapper for [libffi](https://sourceware.org/libffi/). CNA consists of native library (libcna) and Caché class (CNA.CNA).
 
-##Installation##
+## Installation
 
-###Linux###
+### Linux
 
 - Build libfii: `make libffi`. If 'make' says that `GLOBALS_HOME` is undefined, then define it:
 
@@ -19,7 +19,7 @@ CNA provides an interface for using native C-compatible shared libraries without
  do $system.OBJ.Load("path to cna.xml", "c")
 ```
 
-###Windows###
+### Windows
 
 For Windows-based systems you can try to do the same as for Linux (for building you may use [mingw32](http://www.mingw.org/) or [mingw32-w64](http://mingw-w64.sourceforge.net/)). Or you can just download [binary files](https://github.com/intersystems-ru/cna/releases). **Note: types (32-bit or 64-bit) of libcna, current Caché installation and external libraries must be equal.**
 For building you can use [MSYS2](http://msys2.github.io/). 
@@ -33,7 +33,7 @@ How to:
 4. Modify makefile, replace: ```cd libs/libffi && ./configure --build=$(BUILDSYS) --enable-shared=no && $(MAKE)``` with ```cd libs/libffi && ./configure --prefix=/mingw --build=$(BUILDSYS) --enable-shared=no && $(MAKE)```
 5. Follow linux installation steps
 
-##Runnning tests##
+## Runnning tests
 
 If you want to check if CNA works correctly on your system you may run the unit-tests. You will need native library with test functions 'libtest'. If you build CNA by yourself, it is already in the right place. If no — it must be placed in directory `cna/tests/`. Than you should set `^UnitTestRoot` global to the right value and run the tests.
 
@@ -42,7 +42,7 @@ If you want to check if CNA works correctly on your system you may run the unit-
  do ##class(%UnitTest.Manager).RunTest()
 ```
 
-##Simple example##
+## Simple example
 
 Let's try to call `strlen` function from C standard library. In Windows it should be located in `C:\Windows\System32\msvcrt.dll`. In Linux — `/usr/lib/libc.so`. `strlen` returns the length of the string:
 
